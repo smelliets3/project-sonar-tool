@@ -1,5 +1,5 @@
 streamlit
-openai-whisper
+git+https://github.com/openai/whisper.git
 azure-cognitiveservices-vision-customvision
 msrest
 ffmpeg-python
@@ -11,4 +11,7 @@ gspread
 google-auth
 google-auth-oauthlib
 google-auth-httplib2
+langchain
+langchain-core
 langchain-google-genai
+google-generativeai
