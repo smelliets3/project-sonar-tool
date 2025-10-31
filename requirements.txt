@@ -1,0 +1,15 @@
+streamlit
+openai-whisper
+azure-cognitiveservices-vision-customvision
+msrest
+ffmpeg-python
+matplotlib
+pandas
+numpy
+scipy
+gspread
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+langchain
+langchain-google-genai

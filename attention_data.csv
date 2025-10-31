@@ -1,0 +1,14 @@
+﻿media_vehicle,media_form,average_attentive_seconds,rounded_average_attentive_seconds,average_watch_time,rounded_average_watch_time
+Facebook,Short Form or Social,1.6,2,2,2
+Facebook Reels,Short Form or Social,1.6,2,2,2
+Instagram,Short Form or Social,1.3,1,2,2
+Instagram Reels,Short Form or Social,1.3,1,2,2
+Linear TV (15s),Long Form,7.5,8,0,0
+Linear TV (30s),Long Form,13.8,14,0,0
+Online Video (OLV),Long Form,3.2,3,0,0
+OTT (15s),Long Form,8.4,8,0,0
+OTT (30s),Long Form,16.8,17,0,0
+Rewarded OLV,Long Form,10,10,0,0
+TikTok,Short Form or Social,1.6,2,2,2
+YouTube Bumper (6s),Long Form,2.3,2,0,0
+YouTube Non-Skip (15s),Long Form,5.2,5,0,0

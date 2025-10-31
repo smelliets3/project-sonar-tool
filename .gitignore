@@ -1,0 +1,11 @@
+# Sensitive credentials - NEVER upload these
+service_account.json
+.env
+.streamlit/secrets.toml
+# Python temporary files
+*.pyc
+__pycache__/
+# Temporary files
+*.tmp
+temp/
+tmp/
