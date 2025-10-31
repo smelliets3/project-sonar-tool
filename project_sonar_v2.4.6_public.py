@@ -1514,7 +1514,7 @@ def main():
                         attn['media_form']
                     )
 
-                    col1, col2, col3, col4, col5 = st.columns(5)
+                    col1, col2, col3, col4 = st.columns(4)
                     with col1:
                         st.metric("Attentive Branding Score", 
                                 f"{attn['attentive_branding_score']:.0f}%")
@@ -1577,7 +1577,7 @@ def main():
 #                            st.caption(caption_text)
                             a, b, c = st.columns(3)
                             with a:
-                                st.metric("Visual and Audio Branding Seen/Heard", 
+                                st.metric("Visual and Audio Branding", 
                                         f"{caption_stats['visual_and_audio_count']} sec")
                                 
                             with b:
