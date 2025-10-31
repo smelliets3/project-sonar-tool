@@ -23,13 +23,13 @@ from google.oauth2.service_account import Credentials
 st.set_page_config(layout="wide")
 
 # LangChain imports for AI recommendations with Gemini
-try:
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    from langchain.schema import HumanMessage, SystemMessage
-    print("✓ LangChain Google GenAI libraries found")
-except ImportError:
-    st.error("LangChain Google GenAI libraries not found. Please install with: pip install langchain-google-genai")
-    st.stop()
+#try:
+#    from langchain_google_genai import ChatGoogleGenerativeAI
+#    from langchain.schema import HumanMessage, SystemMessage
+#    print("✓ LangChain Google GenAI libraries found")
+#except ImportError:
+#    st.error("LangChain Google GenAI libraries not found. Please install with: pip install langchain-google-genai")
+#    st.stop()
 
 # Whisper, Azure Custom Vision, and ffmpeg imports
 try:
