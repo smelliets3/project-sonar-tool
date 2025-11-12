@@ -64,7 +64,7 @@ CATEGORY_COLORS = {
 
 BRAND_VARIATIONS = {
     "Bounce": ["bounce", "bounces", "bouncy"],
-    "Downy": ["downy", "downey", "dumming", "downie"],
+    "Downy": ["downy", "downey", "dumming", "downie","down"],
     "Gain": ["gain", "gains", "gane", "gayne", "game"],
     "Tide": ["tide", "tied", "tyde", "tyde","todd"],
     "Unstopables": ["unstopables", "unstoppables", "unstoppable", "unstopable", "unstopabls"]
@@ -170,7 +170,7 @@ def extract_audio(video_path, output_audio_path):
         st.error(f"Audio extraction failed: {e}")
         return None
 
-def transcribe_with_whisper(audio_path, model_size="base"):
+def transcribe_with_whisper(audio_path, model_size="small"):
     try:
         model = whisper.load_model(model_size)
         result = model.transcribe(audio_path, word_timestamps=True)
@@ -1305,7 +1305,7 @@ def process_video_analysis(video_file, brand_name, media_vehicle, google_api_key
         if audio_path is None:
             return None, "Audio extraction failed"
         
-        transcription_result = transcribe_with_whisper(audio_path, "base")  # Using base model for speed
+        transcription_result = transcribe_with_whisper(audio_path, "small")  # Using small model for speed
         if transcription_result is None:
             return None, "Audio transcription failed"
         
