@@ -1305,7 +1305,7 @@ def process_video_analysis(video_file, brand_name, media_vehicle, google_api_key
         if audio_path is None:
             return None, "Audio extraction failed"
         
-        transcription_result = transcribe_with_whisper(audio_path, "base")  # Using base model for speed
+        transcription_result = transcribe_with_whisper(audio_path, "large")  # Using large model for speed
         if transcription_result is None:
             return None, "Audio transcription failed"
         
