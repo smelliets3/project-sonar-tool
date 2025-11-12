@@ -67,7 +67,7 @@ BRAND_VARIATIONS = {
     "Downy": ["downy", "downey", "dumming", "downie","down"],
     "Gain": ["gain", "gains", "gane", "gayne", "game"],
     "Tide": ["tide", "tied", "tyde", "tyde","todd"],
-    "Unstopables": ["unstopables", "unstoppables", "unstoppable", "unstopable", "unstopabls"]
+    "Unstopables": ["unstopables", "unstoppables", "unstoppable", "unstopable", "unstopabls","star bubbles"]
 }
 
 MEDIA_VEHICLES = [
