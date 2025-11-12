@@ -1,5 +1,5 @@
 streamlit
-git+https://github.com/openai/whisper.git
+openai-whisper
 azure-cognitiveservices-vision-customvision
 msrest
 ffmpeg-python
