@@ -70,6 +70,19 @@ BRAND_VARIATIONS = {
     "Unstopables": ["unstopables", "unstoppables", "unstoppable", "unstopable", "unstopabls","star bubbles"]
 }
 
+BRAND_DISPLAY_MAP = {
+    "Bounce": "Bounce",
+    "Downy Beads (excl. Unstopables)": "Downy",
+    "Downy LFE": "Downy",
+    "Downy Rinse": "Downy",
+    "Downy (Total)": "Downy",
+    "Gain FE": "Gain",
+    "Gain LND": "Gain",
+    "Gain Mega (LND + FE)": "Gain",
+    "Tide": "Tide",
+    "Unstopables": "Unstopables",
+}
+
 MEDIA_VEHICLES = [
     "Facebook",
     "Facebook Reels",
@@ -1627,7 +1640,8 @@ def main():
         uploaded_file = st.file_uploader("Upload a video file", type=['mp4'])
     
     with col2:
-        selected_brand = st.selectbox("Select Brand", list(BRAND_VARIATIONS.keys()))
+        selected_display_brand = st.selectbox("Select Brand", list(BRAND_DISPLAY_MAP.keys()))
+        selected_brand = BRAND_DISPLAY_MAP[selected_display_brand]
     
     with col3:
         selected_media_vehicle = st.selectbox("Select Intended Media Vehicle", MEDIA_VEHICLES)
