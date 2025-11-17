@@ -1592,7 +1592,18 @@ def main():
             if "results" in message:
                 # Display previous results
                 results = message["results"]
+                
+                st.markdown("<h3 style='text-decoration: underline;'>Branding Summary</h3>", unsafe_allow_html=True)
+                
+                st.markdown("#### Branding Timeline:")
+                st.pyplot(results['timeline_fig'])
 
+                st.markdown("#### Branding Distribution:")
+                st.text(f"{results['total_branding_coverage']}")
+                st.pyplot(results['summary_fig'])
+
+                st.divider()
+                
                 if results.get('attention_results'):
 #                    st.subheader(f"Branding Attention Analysis: Average Consumer Viewing Experience")
                     st.markdown("<h3 style='text-decoration: underline;'>Branding Attention Analysis: Average Consumer Viewing Experience</h3>",unsafe_allow_html=True)   
@@ -1683,20 +1694,6 @@ def main():
 
 #                st.subheader("Branding Analysis Summary")
 #                st.text(results['analysis_summary'])
-
-                st.divider()
-
-#                st.subheader("Branding Summary")
-                st.markdown("<h3 style='text-decoration: underline;'>Branding Summary</h3>", unsafe_allow_html=True)
-                
-                st.markdown("#### Branding Timeline:")
-#                st.subheader("Branding Timeline")
-                st.pyplot(results['timeline_fig'])
-
-                st.markdown("#### Branding Distribution:")
-                st.text(f"{results['total_branding_coverage']}")
-#                st.subheader("Branding Distribution")
-                st.pyplot(results['summary_fig'])
 
                 st.divider()
 
