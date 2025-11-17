@@ -1600,7 +1600,7 @@ def main():
                 st.pyplot(results['timeline_fig'])
 
                 st.markdown("#### Branding Distribution:")
-                st.metric(f"Branding Presence (% of seconds containing branding)", 
+                st.metric("Percentage of Branding Presence", 
                             f"{results['branding_percentage']:.0f}%")
                 #st.text(f"{results['total_branding_coverage']}")
                 st.pyplot(results['summary_fig'])
