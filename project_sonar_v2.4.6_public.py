@@ -707,6 +707,84 @@ def generate_long_form_viewing_simulations(audio_results, visual_results,
     
     return simulations
 
+def create_stacked_long_form_simulation_timelines(simulations, duration):
+    """
+    Create ONE visualization that stacks the 3 long-form simulation timelines
+    vertically with a single shared legend in the top-right *outside* the plots.
+    """
+    n_sims = len(simulations)
+
+    fig_width = max(12, duration * 0.25)   # slightly narrower to allow right margin
+    fig, axes = plt.subplots(n_sims, 1, figsize=(fig_width, 3 * n_sims), sharex=True)
+
+    if n_sims == 1:
+        axes = [axes]
+
+    non_attentive_color = '#000000'
+    audio_non_attentive_color = '#00B050'
+
+    for ax, simulation in zip(axes, simulations):
+        categories = simulation['categories']
+
+        ax.set_xlim(0, duration)
+        ax.set_ylim(0, 1)
+        ax.set_yticks([])
+        ax.set_title(f"Viewing Simulation #{simulation['simulation_number']}")
+
+        # Restore second labels for each subplot
+        ax.set_xticks(range(0, duration + 1, 1))
+        ax.set_xticklabels([str(x) for x in range(0, duration + 1, 1)])
+        ax.tick_params(axis='x', which='both', labelbottom=True)
+
+        # Draw each 1-second block
+        for second, category in categories.items():
+            if category == "Non-Attentive":
+                color = non_attentive_color
+            elif category == "Audio Branding Only (Non-Attentive)":
+                color = audio_non_attentive_color
+            else:
+                color = CATEGORY_COLORS[category]
+
+            ax.add_patch(
+                plt.Rectangle(
+                    (second - 1, 0), 1, 1,
+                    facecolor=color,
+                    edgecolor='black',
+                    linewidth=0.5
+                )
+            )
+
+        ax.grid(True, axis='x', alpha=0.3, linewidth=0.5)
+
+    # --- SINGLE LEGEND (top-right, outside plot area) ---
+    legend_elements = [
+        plt.Rectangle((0, 0), 1, 1, facecolor=CATEGORY_COLORS["Visual and Audio Branding"],
+                      edgecolor='black', label="Visual and Audio Branding"),
+        plt.Rectangle((0, 0), 1, 1, facecolor=CATEGORY_COLORS["Audio Branding Only"],
+                      edgecolor='black', label="Audio Branding Only"),
+        plt.Rectangle((0, 0), 1, 1, facecolor=CATEGORY_COLORS["Visual Branding Only"],
+                      edgecolor='black', label="Visual Branding Only"),
+        plt.Rectangle((0, 0), 1, 1, facecolor=CATEGORY_COLORS["No Branding Present"],
+                      edgecolor='black', label="No Branding Present"),
+        plt.Rectangle((0, 0), 1, 1, facecolor=non_attentive_color,
+                      edgecolor='black', label="Non-Attentive"),
+    ]
+
+    fig.legend(
+        handles=legend_elements,
+        loc='upper right',
+        bbox_to_anchor=(1.2, 1),   # <-- Move legend OUTSIDE plot
+        borderpad=1,
+        frameon=True,
+        title="Legend"
+    )
+        
+    # Reserve space on the right for the legend
+    plt.subplots_adjust(right=0.85)
+
+    plt.tight_layout()
+    return fig
+    
 # "Short Form or Social" Attention/Branding Timeline Visualization
 def create_short_form_timeline_with_watch_time(audio_results, visual_results, 
                                                 avg_attentive_seconds, rounded_avg_watch_time, 
@@ -917,10 +995,10 @@ def perform_attention_analysis(final_categories, audio_results, visual_results,
         )
         
         # Create timeline visualizations for each simulation
-        results['simulation_timelines'] = [
-            create_long_form_simulation_timeline(sim, duration) 
-            for sim in simulations
-        ]
+        results['stacked_simulation_fig'] = create_stacked_long_form_simulation_timelines(
+        simulations, duration
+        )
+        
         results['simulations'] = simulations
     
     return results
@@ -1566,40 +1644,38 @@ def main():
                         st.markdown(caption_text)
                     
                     # Display simulation timelines for Long Form
-                    if 'simulation_timelines' in attn:
+                    if 'stacked_simulation_fig' in attn:
                         st.markdown("#### Viewing Experience Simulations:")
-#                        st.subheader("Viewing Experience Simulations")
-                        for i, timeline_fig in enumerate(attn['simulation_timelines'], 1):
-                            st.pyplot(timeline_fig)
+                        st.pyplot(attn['stacked_simulation_fig'])
                             
                             # Add caption for each simulation
-                            simulation = attn['simulations'][i-1]
-                            caption_stats = calculate_long_form_simulation_caption_stats(
-                                simulation,
-                                message['results']['duration']
-                            )
-                            caption_text = format_long_form_caption_with_plurals(
-                                i,
-                                caption_stats['total_branding_seconds'],
-                                caption_stats['visual_and_audio_count'],
-                                caption_stats['audio_only_count'],
-                                caption_stats['visual_only_count'],
-                                caption_stats['branding_percentage'],
-                                caption_stats['no_branding_percentage']
-                            )
+                            #simulation = attn['simulations'][i-1]
+                            #caption_stats = calculate_long_form_simulation_caption_stats(
+                                #simulation,
+                                #message['results']['duration']
+                            #)
+                            #caption_text = format_long_form_caption_with_plurals(
+                                #i,
+                                #caption_stats['total_branding_seconds'],
+                                #caption_stats['visual_and_audio_count'],
+                                #caption_stats['audio_only_count'],
+                                #caption_stats['visual_only_count'],
+                                #caption_stats['branding_percentage'],
+                                #caption_stats['no_branding_percentage']
+                            #)
 #                            st.caption(caption_text)
-                            a, b, c = st.columns(3)
-                            with a:
-                                st.metric("Visual and Audio Branding", 
-                                        f"{caption_stats['visual_and_audio_count']} sec")
+                            #a, b, c = st.columns(3)
+                            #with a:
+                                #st.metric("Visual and Audio Branding", 
+                                        #f"{caption_stats['visual_and_audio_count']} sec")
                                 
-                            with b:
-                                st.metric("Visual Branding Seen", 
-                                        f"{caption_stats['visual_only_count']} sec")
+                            #with b:
+                                #st.metric("Visual Branding Seen", 
+                                        #f"{caption_stats['visual_only_count']} sec")
                                 
-                            with c:
-                                st.metric("Audio Branding Heard", 
-                                        f"{caption_stats['audio_only_count']} sec")
+                           # with c:
+                                #st.metric("Audio Branding Heard", 
+                                        #f"{caption_stats['audio_only_count']} sec")
                     
                     # Keep the original distribution chart if it exists
                     if results.get('attention_viz'):
