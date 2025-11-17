@@ -1064,7 +1064,7 @@ def get_attentive_branding_rating(score, media_form):
             return {'rating': 'Insufficient', 'color': '#FF0000'}
 
 # Attentive Branding Rating HTML
-def display_attentive_branding_rating(score, media_form):
+def display_attentive_branding_rating(score, media_form, media_vehicle):
     """
     Display the attentive branding rating using Streamlit components.
     
@@ -1092,14 +1092,14 @@ def display_attentive_branding_rating(score, media_form):
     
     # Display the example sentence with highlighted rating
     st.markdown(
-        f"##### Your attentive branding score of **{score:.0f}%** is "
+        f"##### The probability of your brand being seen or heard on {media_vehicle} is **{score:.0f}%** ("
         f"<span style='background-color: {rating_info['color']}; padding: 2px 8px; "
-        f"border-radius: 3px; font-weight: bold; color: #000;'>{rating_info['rating']}</span>.",
+        f"border-radius: 3px; font-weight: bold; color: #000;'>{rating_info['rating']}</span>).",
         unsafe_allow_html=True
     )
     
 #    st.markdown("Attentive Branding Rating:")
-    st.markdown("<p style='font-size:10pt;'>Attentive Branding Rating:</p>",unsafe_allow_html=True)
+    st.markdown("<p style='font-size:10pt;'>Probability Brand Seen/Heard Rating:</p>",unsafe_allow_html=True)
 
     # Create columns for the rating boxes
     cols = st.columns([1, 1, 1, 1])
@@ -1543,7 +1543,8 @@ Total Branding Coverage: {round(branding_percentage)}% of video duration
             'duration': duration,
             'branding_percentage': branding_percentage,
             'attention_results': attention_results,
-            'attention_viz': attention_viz
+            'attention_viz': attention_viz,
+            'media_vehicle': media_vehicle
         }, None
         
     except Exception as e:
@@ -1609,20 +1610,23 @@ def main():
                     st.markdown("<h3 style='text-decoration: underline;'>Branding Attention Analysis: Average Consumer Viewing Experience</h3>",unsafe_allow_html=True)   
 
                     attn = results['attention_results']
+
+                    media_vehicle = results.get('media_vehicle', 'Unknown Vehicle')
                     
                     # Display the attentive branding rating
                     display_attentive_branding_rating(
                         attn['attentive_branding_score'], 
-                        attn['media_form']
+                        attn['media_form'],
+                        media_vehicle
                     )
 
-                    col1, col2, col3 = st.columns(3)
+                    col1, col2 = st.columns(2)
                     with col1:
-                        st.metric("Attentive Branding Score", 
+                        st.metric("Probability Brand Seen/Heard", 
                                 f"{attn['attentive_branding_score']:.0f}%")
                         
                     with col2:
-                        st.metric("Average Attentive Seconds", 
+                        st.metric(f"Average Attentive Seconds on {media_vehicle}",
                                 f"{attn['attentive_seconds']} seconds")
                         
                         # Show watch time for Short Form
@@ -1754,6 +1758,8 @@ def main():
                     })
                 else:
                     # Display results
+                    results['media_vehicle'] = selected_media_vehicle
+                    
                     st.subheader("Analysis Summary")
                     st.text(results['analysis_summary'])
 
