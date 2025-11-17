@@ -739,7 +739,7 @@ def create_short_form_timeline_with_watch_time(audio_results, visual_results,
     watch_time_seconds = min(int(round(rounded_avg_watch_time)), duration)
     
     # Color scheme
-    non_attentive_color = '#999999'  # Grey
+    non_attentive_color = '#000000'  # Grey
     audio_non_attentive_color = '#00B050'  # Audio branding green
     
     # Draw each second
@@ -827,7 +827,7 @@ def create_long_form_simulation_timeline(simulation_result, duration):
         ax.set_xticks(range(0, duration + 1, 1))
     
     # Color scheme
-    non_attentive_color = '#999999'  # Grey
+    non_attentive_color = '#000000'  # Grey
     audio_non_attentive_color = '#00B050'  # Audio branding green
     
     categories = simulation_result['categories']
