@@ -22,14 +22,14 @@ from google.oauth2.service_account import Credentials
 
 st.set_page_config(layout="wide")
 
-# LangChain imports for AI recommendations with Gemini
-#try:
-#    from langchain_google_genai import ChatGoogleGenerativeAI
-#    from langchain.schema import HumanMessage, SystemMessage
-#    print("✓ LangChain Google GenAI libraries found")
-#except ImportError:
-#    st.error("LangChain Google GenAI libraries not found. Please install with: pip install langchain-google-genai")
-#    st.stop()
+# Google GenAI imports for AI recommendations with Gemini
+try:
+    from google import genai
+    from google.genai import types
+    print("✓ Google GenAI libraries found")
+except ImportError:
+    st.error("Google GenAI libraries not found. Please install with: pip install google-generativeai")
+    st.stop()
 
 # Whisper, Azure Custom Vision, and ffmpeg imports
 try:
@@ -1312,46 +1312,44 @@ def log_analysis_results(results, video_file_name, brand_name, media_vehicle,
 def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_api_key):
     """Get AI recommendation using LangChain and Google Gemini"""
     try:
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            temperature=0.1,
-            google_api_key=google_api_key
-        )
+        # Configure the API key
+        client = genai.Client(api_key=google_api_key)
+
+        sys_instruct = """You are an expert media strategist and advertising analyst.
+        Your job is to provide recommendations about whether a video advertisement should be placed on a specific media vehicle based on branding and attention analysis results.
         
-        system_prompt = """You are an expert media strategist and advertising analyst. Your job is to provide recommendations about whether a video advertisement should be placed on a specific media vehicle based on branding and attention analysis results.
+        Consider these factors:
+        1. Brand presence strength (audio + visual)
+        2. Media vehicle requirements
+        3. Audience attention patterns
+        4. Consumer experience
+        5. Brand recall effectiveness"""
 
-Consider these factors in your analysis:
-1. Brand presence strength (audio + visual)
-2. Media vehicle requirements and best practices
-3. Audience attention patterns for the chosen media vehicle
-4. Consumer experience on the chosen media vehicle
-5. Brand recall and recognition effectiveness
+        user_prompt = f"""
+        DATA TO ANALYZE:
+        Brand: {brand_name}
+        Intended Media Vehicle: {media_vehicle}
 
-Provide a clear recommendation with supporting reasoning."""
+        Branding and Attention Analysis Results:
+        {analysis_summary}
 
-        human_prompt = f"""
-Brand: {brand_name}
-Intended Media Vehicle: {media_vehicle}
-
-Branding and Attention Analysis Results:
-{analysis_summary}
-
-Based on this analysis, should this video be placed on {media_vehicle}? 
-
-Please provide:
-1. Clear recommendation (Highly Recommended / Recommended / Conditional / Not Recommended)
-2. Key reasoning points
-3. Specific suggestions for optimization if needed 
-
-Keep your response concise but comprehensive."""
-
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=human_prompt)
-        ]
+        Based on this analysis, should this video be placed on {media_vehicle}? 
         
-        response = llm.invoke(messages)
-        return response.content
+        Please provide:
+        1. Clear recommendation (Highly Recommended / Recommended / Conditional / Not Recommended)
+        2. Key reasoning points
+        3. Specific suggestions for optimization if needed 
+        """
+        
+        response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    config=types.GenerateContentConfig(
+        system_instruction=sys_instruct),
+    contents=user_prompt
+)
+        
+        # Return text
+        return response.text
         
     except Exception as e:
         return f"Error generating AI recommendation: {e}. Please check your Google API key and try again."
@@ -1473,28 +1471,7 @@ Total Branding Coverage: {round(branding_percentage)}% of video duration
 #        Attention-Based Branding Analysis ({attention_results['media_form']}):
 #        - Attentive Seconds Analyzed: {attention_results['attentive_seconds']} seconds
 #        - Attentive Branding Score: {attention_results['attentive_branding_score']:.0f}%"""
-            
-            # Add Short Form specific context
-#            if attention_results['media_form'] == 'Short Form or Social':
-#                if 'watch_time_seconds' in attention_results:
-#                   analysis_summary += f"""
-#        - Average Watch Time: {attention_results['watch_time_seconds']} seconds
-#        - Total Seconds Classified: {attention_results['total_classified_seconds']} seconds"""
-            
-#            # Add Long Form specific context
-#            elif attention_results['media_form'] == 'Long Form':
-#                if 'branding_percentage' in attention_results:
-#                    analysis_summary += f"""
-#        - Overall Video Branding Percentage: {attention_results['branding_percentage']:.0f}%"""
-            
-#            analysis_summary += f"""
-
-#Branding Distribution During Attentive Moments:
-#- Visual and Audio Branding: {attention_results['attentive_branding_distribution']['Visual and Audio Branding']:.0f}%
-#- Audio Branding Only: {attention_results['attentive_branding_distribution']['Audio Branding Only']:.0f}%
-#- Visual Branding Only: {attention_results['attentive_branding_distribution']['Visual Branding Only']:.0f}%
-#- No Branding Present: {attention_results['attentive_branding_distribution']['No Branding Present']:.0f}%
-#"""
+        
         # Get AI recommendation
         status_text.text("Generating AI recommendation...")
         progress_bar.progress(95)
