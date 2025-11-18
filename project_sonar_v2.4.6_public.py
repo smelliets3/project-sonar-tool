@@ -1681,7 +1681,7 @@ def main():
                 st.divider()
 
 #                st.subheader("AI Recommendation")
-                st.markdown(f"<h3 style='text-decoration: underline;'>Is the creative best suited for the intended media vehicle?</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='text-decoration: underline;'>Is the creative best suited for {media_vehicle}?</h3>", unsafe_allow_html=True)
                 st.caption("The following recommendations were generated with help of AI. The insights are for informational purposes only and should be reviewed with human judgment.")
                 st.markdown("<p style='font-size:10pt;'><i>This section uses AI to provide recommendations about whether a creative should be placed on the intended media vehicle specified as input. " \
                 "The recommendation of Highly Recommended, Recommended, Conditional, or Not Recommended is based on the branding and attention analysis results.</i></p>", unsafe_allow_html=True)
