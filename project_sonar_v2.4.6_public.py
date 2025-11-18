@@ -1112,8 +1112,8 @@ def display_attentive_branding_rating(score, media_form, media_vehicle):
                         border: 2px solid #000; border-radius: 5px; text-align: center;
                         min-height: 50px; display: flex; flex-direction: column; 
                         justify-content: center;">
-                <div style="font-weight: bold; font-size: 12px; color: #000;">{r['label']}</div>
-                <div style="font-style: italic; font-size: 10px; color: #000; margin-top: 0px;line-height: 1.2;">{r['range']}</div>
+                <div style="font-weight: bold; font-size: 14px; color: #000;">{r['label']}</div>
+                <div style="font-style: italic; font-size: 12px; color: #000; margin-top: 0px;line-height: 1.2;">{r['range']}</div>
             </div>
             """
             st.markdown(box_html, unsafe_allow_html=True)
@@ -1229,7 +1229,7 @@ def format_long_form_caption_with_plurals(sim_num, total, va_count, audio_count,
             f"while the remaining {no_branding_pct:.0f}% of seconds had No Branding Present "
             f"or were non-attentive.")
 
-def log_analysis_results(results, video_file_name, brand_name, media_vehicle,
+def log_analysis_results(results, video_file_name, brand_name, brand_display_name, media_vehicle,
                        final_categories, audio_results, visual_results):
    """
    Log analysis results to Google Sheets for tracking and benchmarking.
@@ -1270,7 +1270,8 @@ def log_analysis_results(results, video_file_name, brand_name, media_vehicle,
                media_form,
                duration,
                second,
-               branding_category
+               branding_category,
+               brand_display_name
            ])
        
        # --- FILE 2: Summary Log ---
@@ -1296,7 +1297,8 @@ def log_analysis_results(results, video_file_name, brand_name, media_vehicle,
            round(audio_only_pct, 2),
            round(no_branding_pct, 2),
            round(branding_percentage, 2),
-           round(attentive_branding_score, 2) if attentive_branding_score is not None else None
+           round(attentive_branding_score, 2) if attentive_branding_score is not None else None,
+           brand_display_name
        ]]
        
        # --- Upload to Google Sheets (DATA ONLY, NO HEADERS) ---
@@ -1364,7 +1366,7 @@ def cleanup_temp_files(audio_file, frames_dir):
         st.warning(f"Cleanup warning: {e}")
 
 # Main Process Function
-def process_video_analysis(video_file, brand_name, media_vehicle, google_api_key, attention_df):
+def process_video_analysis(video_file, brand_name, brand_display_name, media_vehicle, google_api_key, attention_df):
     """Main processing function"""
     progress_bar = st.progress(0)
     status_text = st.empty()
@@ -1495,6 +1497,7 @@ Total Branding Coverage: {round(branding_percentage)}% of video duration
             },
             video_file.name,
             brand_name,
+            brand_display_name,
             media_vehicle,
             final_categories,
             audio_results,
@@ -1726,7 +1729,7 @@ def main():
                 st.write("Processing your video... This may take a few minutes depending on video length.")
                 
                 results, error = process_video_analysis(
-                    uploaded_file, selected_brand, selected_media_vehicle, GOOGLE_API_KEY, attention_df
+                    uploaded_file, selected_brand, selected_display_brand, selected_media_vehicle, GOOGLE_API_KEY, attention_df
                 )
                 
                 if error:
