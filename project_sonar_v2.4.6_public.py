@@ -1533,7 +1533,11 @@ Total Branding Coverage: {round(branding_percentage)}% of video duration
 # Streamlit UI
 def main():
     st.title("🎬 AI Branding Analysis Chatbot")
-    
+
+    # --- Initialize a reset counter ---
+    if "input_key" not in st.session_state:
+        st.session_state.input_key = 0
+        
     # Check FFmpeg availability
     if not check_ffmpeg():
         st.error("FFmpeg not found! Please install FFmpeg to process videos.")
@@ -1696,14 +1700,27 @@ def main():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        uploaded_file = st.file_uploader("Upload a video file", type=['mp4'])
+        uploaded_file = st.file_uploader(
+            "Upload a video file", 
+            type=['mp4'], 
+            key=f"video_uploader_{st.session_state.input_key}" 
+        )
     
     with col2:
-        selected_display_brand = st.selectbox("Select Brand", list(BRAND_DISPLAY_MAP.keys()))
+        selected_display_brand = st.selectbox(
+            "Select Brand", 
+            list(BRAND_DISPLAY_MAP.keys()),
+            key=f"brand_select_{st.session_state.input_key}"
+        )
+        
         selected_brand = BRAND_DISPLAY_MAP[selected_display_brand]
     
     with col3:
-        selected_media_vehicle = st.selectbox("Select Intended Media Vehicle", MEDIA_VEHICLES)
+        selected_media_vehicle = st.selectbox(
+            "Select Intended Media Vehicle", 
+            MEDIA_VEHICLES,
+            key=f"vehicle_select_{st.session_state.input_key}"
+        )
     
     # Process button
     if st.button("Analyze Video", type="primary"):
@@ -1760,6 +1777,8 @@ def main():
                         "content": "**Analysis Complete!**\n\nI've analyzed your video and generated recommendations. Check the detailed results below!",
                         "results": results
                     })
+
+                    st.session_state.input_key += 1
             
             st.rerun()
 
