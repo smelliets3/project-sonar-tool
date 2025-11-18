@@ -1318,7 +1318,7 @@ def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_ap
         client = genai.Client(api_key=google_api_key)
 
         sys_instruct = """You are an expert media strategist and advertising analyst.
-        Your job is to provide recommendations about whether a video advertisement should be placed on a specific media vehicle based on branding and attention analysis results.
+        Your job is to provide recommendations about whether a video advertisement should be placed on a specific media vehicle based on branding and attention analysis results. Avoid strong language like "unacceptable" or "extremely" in your response.
         
         Consider these factors:
         1. Brand presence strength (audio + visual)
@@ -1338,20 +1338,41 @@ def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_ap
         Based on this analysis, should this video be placed on {media_vehicle}? 
         
         Please provide:
-        1. Clear recommendation (Highly Recommended / Recommended / Conditional / Not Recommended)
+        1. Is the creative recommended for {media_vehicle}? (Highly Recommended / Recommended / Conditional / Not Recommended)
         2. Key reasoning points
         3. Specific suggestions for optimization if needed 
         """
         
-        response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    config=types.GenerateContentConfig(
-        system_instruction=sys_instruct),
-    contents=user_prompt
-)
+        # --- RETRY LOGIC ---
+        max_retries = 4
+        base_delay = 2 
         
-        # Return text
-        return response.text
+        for attempt in range(max_retries):
+            try:
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    config=types.GenerateContentConfig(
+                        system_instruction=sys_instruct
+                    ),
+                    contents=user_prompt
+                )
+                # If successful, return immediately
+                return response.text
+
+            except Exception as e:
+                # Check if the error is a 503 Service Unavailable (Overloaded)
+                if "503" in str(e) or "overloaded" in str(e).lower():
+                    if attempt < max_retries - 1:
+                        # Exponential backoff: Wait 2s, then 4s, then 8s...
+                        sleep_time = base_delay * (2 ** attempt)
+                        time.sleep(sleep_time)
+                        continue  # Try the loop again
+                    else:
+                        return "Google AI is currently overloaded. Please try again in a few minutes."
+                else:
+                    # If it's a completely different error (e.g. Invalid API Key), fail immediately
+                    raise e
+        # --- RETRY LOGIC ---
         
     except Exception as e:
         return f"Error generating AI recommendation: {e}. Please check your Google API key and try again."
@@ -1463,16 +1484,16 @@ Overall Branding Presence Analysis:
 - Visual Branding Only: {category_counts['Visual Branding Only']} seconds ({round((category_counts['Visual Branding Only']/duration)*100)}%)
 - No Branding Present: {category_counts['No Branding Present']} seconds ({round((category_counts['No Branding Present']/duration)*100)}%)
 
-Total Branding Coverage: {round(branding_percentage)}% of video duration
+Percentage of Branding Presence: {round(branding_percentage)}% of video duration
 """
         
         # Add attention analysis to summary if available
         if attention_results:
             analysis_summary += f"""
 
-#        Attention-Based Branding Analysis ({attention_results['media_form']}):
-#        - Attentive Seconds Analyzed: {attention_results['attentive_seconds']} seconds
-#        - Attentive Branding Score: {attention_results['attentive_branding_score']:.0f}%"""
+        - Attention Norms Based Branding Analysis ({attention_results['media_form']}):
+        - Attentive Seconds Analyzed: {attention_results['attentive_seconds']} seconds
+        - Probablity brand seen/heard given what we know about attention norms on platform: {attention_results['attentive_branding_score']:.0f}%"""
         
         # Get AI recommendation
         status_text.text("Generating AI recommendation...")
