@@ -1652,18 +1652,18 @@ def main():
                         st.pyplot(attn['timeline_viz'])
                         
                         # Add caption for Short Form
-                        caption_stats = calculate_short_form_caption_stats(
-                            message['results']['attention_results']['audio_results'],
-                            message['results']['attention_results']['visual_results'],
-                            attn['watch_time_seconds']
-                        )
-                        caption_text = format_caption_with_plurals(
-                            caption_stats['total_branding_seconds'],
-                            caption_stats['visual_and_audio_count'],
-                            caption_stats['audio_only_count'],
-                            caption_stats['visual_only_count']
-                        )
-                        st.markdown(caption_text)
+                        #caption_stats = calculate_short_form_caption_stats(
+                            #message['results']['attention_results']['audio_results'],
+                            #message['results']['attention_results']['visual_results'],
+                            #attn['watch_time_seconds']
+                        #)
+                        #caption_text = format_caption_with_plurals(
+                            #caption_stats['total_branding_seconds'],
+                            #caption_stats['visual_and_audio_count'],
+                            #caption_stats['audio_only_count'],
+                            #caption_stats['visual_only_count']
+                        #)
+                        #st.markdown(caption_text)
                     
                     # Display simulation timelines for Long Form
                     if 'stacked_simulation_fig' in attn:
