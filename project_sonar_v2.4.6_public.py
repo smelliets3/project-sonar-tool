@@ -208,6 +208,31 @@ def get_criteria_for_media_vehicle(media_vehicle, practices_df):
        st.error(f"Error filtering criteria: {e}")
        return []
 
+def upload_video_to_gemini(video_path, google_api_key):
+   """
+   Upload video to Gemini's File API for analysis.
+   Args:
+       video_path: Path to the video file
+       google_api_key: Google API key
+   Returns:
+       uploaded_file: Uploaded file object, or None if failed
+   """
+   try:
+       client = genai.Client(api_key=google_api_key)
+       # Upload the video file (pass path as string to file parameter)
+       uploaded_file = client.files.upload(file=video_path)
+       # Wait for file to be processed
+       while uploaded_file.state.name == "PROCESSING":
+           time.sleep(2)
+           uploaded_file = client.files.get(name=uploaded_file.name)
+       if uploaded_file.state.name == "FAILED":
+           st.error("Video upload to Gemini failed")
+           return None
+       return uploaded_file
+   except Exception as e:
+       st.error(f"Error uploading video to Gemini: {e}")
+       return None
+       
 # Audio Extraction + Analysis
 def extract_audio(video_path, output_audio_path):
     try:
@@ -1266,6 +1291,53 @@ def format_long_form_caption_with_plurals(sim_num, total, va_count, audio_count,
             f"Branding was seen or heard in {branding_pct:.0f}% of the viewing experience, "
             f"while the remaining {no_branding_pct:.0f}% of seconds had No Branding Present "
             f"or were non-attentive.")
+
+def call_gemini_with_retry(client, model, system_instruction, user_prompt, max_retries=4, base_delay=2):
+    """
+    Retry logic helpfer function 
+
+    Call Gemini API with retry logic for handling overload errors.
+    
+    Args:
+        client: Gemini client instance
+        model: Model name (e.g., "gemini-2.5-flash")
+        system_instruction: System instruction text
+        user_prompt: User prompt text or content list
+        max_retries: Maximum number of retry attempts
+        base_delay: Base delay in seconds for exponential backoff
+        
+    Returns:
+        response.text or error message
+    """
+    # --- RETRY LOGIC ---
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=model,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction
+                ),
+                contents=user_prompt
+            )
+            # If successful, return immediately
+            return response.text
+            
+        except Exception as e:
+            # Check if the error is a 503 Service Unavailable (Overloaded)
+            if "503" in str(e) or "overloaded" in str(e).lower():
+                if attempt < max_retries - 1:
+                    # Exponential backoff: Wait 2s, then 4s, then 8s...
+                    sleep_time = base_delay * (2 ** attempt)
+                    time.sleep(sleep_time)
+                    continue # Try the loop again
+                else:
+                    return "Google AI is currently overloaded. Please try again in a few minutes."
+            else:
+                # If it's a completely different error (e.g. Invalid API Key), fail immediately
+                raise e
+    # --- RETRY LOGIC ---
+
+    return "Failed to get response after maximum retries."
 
 def log_analysis_results(results, video_file_name, brand_name, brand_display_name, media_vehicle,
                        final_categories, audio_results, visual_results):
