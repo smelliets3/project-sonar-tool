@@ -1799,10 +1799,10 @@ def log_analysis_results(results, video_file_name, brand_name, brand_display_nam
        append_to_gsheet(SECOND_LOG_SHEET_ID, second_data)
        append_to_gsheet(SUMMARY_LOG_SHEET_ID, summary_data)
        
-       return analysis_id, None
+       return analysis_id, timestamp, None
    
    except Exception as e:
-       return None, f"Logging failed: {str(e)}"
+       return None, None, f"Logging failed: {str(e)}"
 
 def log_feature_extraction(sheet_id, analysis_id, timestamp, feature_responses):
    """
@@ -2010,21 +2010,12 @@ Percentage of Branding Presence: {round(branding_percentage)}% of video duration
         - Attentive Seconds Analyzed: {attention_results['attentive_seconds']} seconds
         - Probablity brand seen/heard given what we know about attention norms on platform: {attention_results['attentive_branding_score']:.0f}%"""
         
-        # Get AI recommendation
-        status_text.text("Generating AI recommendation...")
-        progress_bar.progress(95)
-        
-        ai_recommendation = get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_api_key)
-        
         # Create visualizations
         timeline_fig = create_timeline_visualization(final_categories, duration)
         summary_fig = create_summary_visualization(final_categories, duration)
         
-        progress_bar.progress(100)
-        status_text.text("Analysis complete!")
-        
         # Log results to Google Sheets
-        analysis_id, log_error = log_analysis_results(
+        analysis_id, timestamp_str, log_error = log_analysis_results(
             {
                 'duration': duration,
                 'category_counts': category_counts,
@@ -2044,6 +2035,110 @@ Percentage of Branding Presence: {round(branding_percentage)}% of video duration
             st.warning(f"Results were not logged: {log_error}")
         else:
             st.success(f"Analysis logged with ID: {analysis_id}")
+        
+        # ============================================================================
+        # ENHANCED AI RECOMMENDATION WITH MEDIA FORM LOGIC
+        # ============================================================================
+        
+        # Upload video to Gemini File API for AI analysis
+        status_text.text("Uploading video for AI analysis...")
+        progress_bar.progress(88)
+        
+        gemini_video_file = upload_video_to_gemini(video_path, google_api_key)
+        if gemini_video_file is None:
+            st.warning("Video upload to Gemini failed. AI recommendation will use basic analysis only.")
+            criteria_output_response = None
+            creative_best_practice_summary = None
+        else:
+            # Determine media form from attention results
+            if attention_results:
+                media_form = attention_results['media_form']
+            else:
+                # Fallback: determine from attention_df
+                attention_metrics = get_attention_metrics(media_vehicle, attention_df)
+                media_form = attention_metrics['media_form'] if attention_metrics else "Unknown"
+            
+            # ============================================================================
+            # SHORT FORM OR SOCIAL FLOW (4 API CALLS)
+            # ============================================================================
+            if media_form == "Short Form or Social":
+                status_text.text("Extracting features from video (1/4)...")
+                progress_bar.progress(90)
+                
+                # Call #1: Feature Extraction
+                feature_output_response = extract_features_from_video(
+                    gemini_video_file, analysis_id, timestamp_str, google_api_key
+                )
+                
+                if feature_output_response:
+                    status_text.text("Comparing features to criteria (2/4)...")
+                    progress_bar.progress(92)
+                    
+                    # Call #2: Compare Features to Criteria
+                    criteria_output_response = compare_features_to_criteria(
+                        feature_output_response, media_vehicle, analysis_id, timestamp_str, google_api_key
+                    )
+                    
+                    if criteria_output_response:
+                        status_text.text("Summarizing criteria assessment (3/4)...")
+                        progress_bar.progress(94)
+                        
+                        # Call #3: Summarize Criteria
+                        creative_best_practice_summary = summarize_criteria_and_suggest_improvements(
+                            criteria_output_response, media_vehicle, analysis_id, timestamp_str, google_api_key
+                        )
+                    else:
+                        creative_best_practice_summary = None
+                else:
+                    criteria_output_response = None
+                    creative_best_practice_summary = None
+            
+            # ============================================================================
+            # LONG FORM FLOW (3 API CALLS)
+            # ============================================================================
+            elif media_form == "Long Form":
+                status_text.text("Assessing criteria from video (1/3)...")
+                progress_bar.progress(90)
+                
+                # Call #1: Direct Criteria Assessment
+                criteria_output_response = assess_criteria_from_video_longform(
+                    gemini_video_file, media_vehicle, analysis_id, timestamp_str, google_api_key
+                )
+                
+                if criteria_output_response:
+                    status_text.text("Summarizing criteria assessment (2/3)...")
+                    progress_bar.progress(93)
+                    
+                    # Call #2: Summarize Criteria (same function as Short Form #3)
+                    creative_best_practice_summary = summarize_criteria_and_suggest_improvements(
+                        criteria_output_response, media_vehicle, analysis_id, timestamp_str, google_api_key
+                    )
+                else:
+                    creative_best_practice_summary = None
+            
+            else:
+                # Unknown media form - skip enhanced AI
+                criteria_output_response = None
+                creative_best_practice_summary = None
+        
+        # Get AI recommendation (final call for both flows)
+        status_text.text("Generating final AI recommendation...")
+        progress_bar.progress(96)
+        
+        # Call #4 (Short Form) / Call #3 (Long Form): Final Recommendation
+        ai_recommendation = get_ai_recommendation(
+            analysis_summary, 
+            brand_name, 
+            media_vehicle, 
+            google_api_key,
+            criteria_output_response=criteria_output_response,
+            creative_best_practice_summary=creative_best_practice_summary,
+            analysis_id=analysis_id,
+            timestamp=timestamp_str
+        )
+
+        progress_bar.progress(100)
+        status_text.text("Analysis complete!")
         
         # Cleanup
         cleanup_temp_files(temp_audio_file, frames_dir)
@@ -2222,7 +2317,7 @@ def main():
                 st.caption("The following recommendations were generated with help of AI. The insights are for informational purposes only and should be reviewed with human judgment.")
                 st.markdown("<p style='font-size:10pt;'><i>This section uses AI to provide recommendations about whether a creative should be placed on the intended media vehicle specified as input. " \
                 "The recommendation of Highly Recommended, Recommended, Conditional, or Not Recommended is based on the branding and attention analysis results.</i></p>", unsafe_allow_html=True)
-                st.write(results['ai_recommendation'])
+                st.markdown(results['ai_recommendation'])
         
     # Input section
     st.subheader("Provide Your Inputs")
@@ -2299,7 +2394,7 @@ def main():
                     st.pyplot(results['summary_fig'])
         
                     st.subheader("AI Recommendation")
-                    st.write(results['ai_recommendation'])
+                    st.markdown(results['ai_recommendation'])
                     
                     # Add assistant message with results
                     st.session_state.messages.append({
