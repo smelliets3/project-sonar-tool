@@ -1,0 +1,50 @@
+feature_id,feature_name,description
+1,Key Visuals (First 3 Seconds),Describe the key visuals in the first 3 seconds.
+2,Key Message (First 3 Seconds),Describe the main message conveyed in the first 3 seconds.
+3,Hook (Y/N),Identify if there is a verbal statement/hook in the first 3 seconds.
+4,Hook Statement,Transcribe the verbal hook statement.
+5,Hook Relatability,Describe the verbal hook's relatability.
+6,Text Hook (Y/N),Identify if there is on-screen hook or text in the first 3 seconds.
+7,Text Hook Content,"If there is text on-screen, what does it say?"
+8,Hook Mentions Product,Does the on-screen text or audio hook mention the product?
+9,Product Placement Visually Introduced (time),"Identify what time the product or brand logo being advertised is first visually shown in XX:XX format. Do not include anything else in your output. Extract the numbers only. If there is no time available, return null"
+10,Product Placement Verbally Introduced (time),"Identify what time the product or brand being advertised is verbally mentioned in XX:XX format. If there is no time available, return null"
+11,Product Placement (Close Up or Far),Identify if the product is shown close up or far away when it is first introduced.
+12,Product Placement (Close Ups),Are there any close-up visuals of the product throughout the video?
+13,Product Placement Interaction,Describe in detail how the product is interacted with.
+14,Product Benefits (time first mentioned),"Identify what time the first product benefit is mentioned in XX:XX format. If there is no time available, return null"
+15,# of Product Benefits Mentioned Throughout Video,Identify the number of product benefits mentioned throughout the video.
+16,Product Benefits Storytelling,Describe how the product benefits are incorporated into the storytelling.
+17,Main Product Benefit,Describe the main product benefit mentioned.
+18,Setting in First 5 Seconds,"In the first 5 seconds, identify and describe the setting or location."
+19,Setting Static or Dynamic,Does the setting change or remain static throughout the video?
+20,# of People and Description,Identify the number of and describe the people featured in the video.
+21,Direct Eye Contact (first 3 seconds),Is there direct eye contact in the first 3 seconds?
+22,Body Language,Describe the body language of the people featured.
+23,Facial Expressions,Describe the facial expressions of the people featured.
+24,Emotional Appeal,Describe the emotional appeal.
+25,Humor,"What type of humor, if any, is used?"
+26,Call to Action (Y/N),Is there a call to action?
+27,Call to Action (Explicit or Implicit),Is the call to action implicit or explicit?
+28,Call to Action (Explicit time mentioned),"If call to action is explicit, at what time is the call to action mentioned? Provide in XX:XX format. If there is no time available, return null"
+29,Call to Action (text),Is there on-screen text to pair with the call to action?
+30,Call to Action (Consumer Takeaway),"If call to action is explicit, what action should the user take after watching?"
+31,Storytelling,Is there a narrative structure?
+32,Target Audience,Identify the target audience that this video would appeal to.
+33,Relatability,Describe how relatable the video and story are to a general viewer on social media.
+34,Music or Sound Effects,Is there music or sound effects in the video?
+35,Music Description,"If there is music, describe the mood and tempo."
+36,Voiceover/Dialogue Time Beginning,"Identify the time that voiceover or dialogue begins in XX:XX format. If there is no time available, return null"
+37,Dialogue (Y/N),Identify whether there is dialogue.
+38,Voiceover or Direct Dialogue,Identify whether the video is direct dialogue or voiceover.
+39,Voiceover or Dialogue Pace,"If there is voiceover or dialogue, is the dialogue pace slow, medium, or fast?"
+40,Tone of Voice,Identify and describe the tone of voice throughout the video.
+41,Visual Pace,"Is the visual pace of the video slow, medium, or fast?"
+42,Camera Movement,Describe the camera movement throughout the video.
+43,Number of Editing Cuts or Visual Transitions (First 3 seconds),Identify the number of cuts or visual transitions in the first 3 seconds.
+44,Editing and Visual Effects,Are there any and what type of visual effects are included throughout the video?
+45,Overall Summary,Summarize what happens in the video in 150 characters or less.
+46,Consumer Takeaway (First 3 Seconds),What would a consumer take away if they only watched the first 3 seconds?
+47,Consumer Takeaway (50% of video),What would a consumer take away if they watched half of the video?
+48,Consumer Takeaway (100% of video),What would a consumer take away if they watched the full video?
+49,Additional Notes,Include any other relevant features that should be considered for my analysis on social content quality.

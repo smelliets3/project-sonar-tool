@@ -1,0 +1,100 @@
+media_vehicle,media_form,criteria_id,criteria_name,description
+Facebook,Short Form or Social,1,Branded Early,Is the product or brand shown within the first 2 seconds?
+Facebook,Short Form or Social,2,Strong Hook,Does the video start with a strong hook such as a curiosity-inducing question or an attention-grabbing visual?
+Facebook,Short Form or Social,3,Visual Engagement,"Are dynamic camera movements (e.g., panning, zooming) or setting changes used to maintain interest?"
+Facebook,Short Form or Social,4,Relatability,"Does the video highlight specific, real-life scenarios (e.g., muddy dogs, stubborn odors)?"
+Facebook,Short Form or Social,5,Problem-Solution - Pain Point,Does the video identify a recognizable pain point? 
+Facebook,Short Form or Social,6,Problem-Solution - Solution,"If a pain point is mentioned, does the video demonstrate how the product solves that pain point?"
+Facebook,Short Form or Social,7,Authentic Human Connection,Does the video include direct dialogue or testimonials from relatable people or influencers that make the ad feel conversational?
+Facebook,Short Form or Social,8,In-Video Product Usage,Is the product shown in use within the video?
+Facebook,Short Form or Social,9,Product Integration,"Is the product integrated into routine or relatable scenarios to provide sensory proof of effectiveness (e.g., smells good, looks clean) and ease of use?"
+Facebook Reels,Short Form or Social,1,Branded Early,Is the product or brand shown within the first 2 seconds?
+Facebook Reels,Short Form or Social,2,Strong Hook,Does the video start with a strong hook such as a curiosity-inducing question or an attention-grabbing visual?
+Facebook Reels,Short Form or Social,3,Visual Engagement,"Are dynamic camera movements (e.g., panning, zooming) or setting changes used to maintain interest?"
+Facebook Reels,Short Form or Social,4,Relatability,"Does the video highlight specific, real-life scenarios (e.g., muddy dogs, stubborn odors)?"
+Facebook Reels,Short Form or Social,5,Problem-Solution - Pain Point,Does the video identify a recognizable pain point? 
+Facebook Reels,Short Form or Social,6,Problem-Solution - Solution,"If a pain point is mentioned, does the video demonstrate how the product solves that pain point?"
+Facebook Reels,Short Form or Social,7,Authentic Human Connection,Does the video include direct dialogue or testimonials from relatable people or influencers that make the ad feel conversational?
+Facebook Reels,Short Form or Social,8,In-Video Product Usage,Is the product shown in use within the video?
+Facebook Reels,Short Form or Social,9,Product Integration,"Is the product integrated into routine or relatable scenarios to provide sensory proof of effectiveness (e.g., smells good, looks clean) and ease of use?"
+Instagram,Short Form or Social,1,Branded Early,Is the product or brand shown within the first 2 seconds?
+Instagram,Short Form or Social,2,Strong Hook,Does the video start with a strong hook such as a curiosity-inducing question or an attention-grabbing visual?
+Instagram,Short Form or Social,3,Visual Engagement,"Are dynamic camera movements (e.g., panning, zooming) or setting changes used to maintain interest?"
+Instagram,Short Form or Social,4,Relatability,"Does the video highlight specific, real-life scenarios (e.g., muddy dogs, stubborn odors)?"
+Instagram,Short Form or Social,5,Problem-Solution - Pain Point,Does the video identify a recognizable pain point? 
+Instagram,Short Form or Social,6,Problem-Solution - Solution,"If a pain point is mentioned, does the video demonstrate how the product solves that pain point?"
+Instagram,Short Form or Social,7,Authentic Human Connection,Does the video include direct dialogue or testimonials from relatable people or influencers that make the ad feel conversational?
+Instagram,Short Form or Social,8,In-Video Product Usage,Is the product shown in use within the video?
+Instagram,Short Form or Social,9,Product Integration,"Is the product integrated into routine or relatable scenarios to provide sensory proof of effectiveness (e.g., smells good, looks clean) and ease of use?"
+Instagram Reels,Short Form or Social,1,Branded Early,Is the product or brand shown within the first 2 seconds?
+Instagram Reels,Short Form or Social,2,Strong Hook,Does the video start with a strong hook such as a curiosity-inducing question or an attention-grabbing visual?
+Instagram Reels,Short Form or Social,3,Visual Engagement,"Are dynamic camera movements (e.g., panning, zooming) or setting changes used to maintain interest?"
+Instagram Reels,Short Form or Social,4,Relatability,"Does the video highlight specific, real-life scenarios (e.g., muddy dogs, stubborn odors)?"
+Instagram Reels,Short Form or Social,5,Problem-Solution - Pain Point,Does the video identify a recognizable pain point? 
+Instagram Reels,Short Form or Social,6,Problem-Solution - Solution,"If a pain point is mentioned, does the video demonstrate how the product solves that pain point?"
+Instagram Reels,Short Form or Social,7,Authentic Human Connection,Does the video include direct dialogue or testimonials from relatable people or influencers that make the ad feel conversational?
+Instagram Reels,Short Form or Social,8,In-Video Product Usage,Is the product shown in use within the video?
+Instagram Reels,Short Form or Social,9,Product Integration,"Is the product integrated into routine or relatable scenarios to provide sensory proof of effectiveness (e.g., smells good, looks clean) and ease of use?"
+Linear TV (15s),Long Form,1,Communicate Superior Brand Benefit & Equity,Is the brand and/or benefit central to the drama in the video?
+Linear TV (15s),Long Form,2,Clear Benefit Visuals,Does the video include clear benefit visuals that highlight what makes the brand superior?
+Linear TV (15s),Long Form,3,Get and Hold Attention with TV Drama,"Does the video use TV drama (i.e. engaging sound design, being surprisingly familiar) to break through the clutter of TV commercials?"
+Linear TV (15s),Long Form,4,Emotional Connection,"Does the video leverage drama to evoke a positive reaction towards the brand (i.e make you laugh, cry, or feel)?"
+Linear TV (15s),Long Form,5,Leverages Brand Assets in a TV-Relevant Way,"Are brand assets (logos, signature audio, jingles, colors) integrated in a way suited to TV?"
+Linear TV (15s),Long Form,6,Audio Branding Emphasis,Is there a strong emphasis on audio assets that reinforce brand identity?
+Linear TV (15s),Long Form,7,Simple & Clear,"Does the video use familiar scenes, characters, or settings to keep the drama simple?"
+Linear TV (15s),Long Form,8,Product Integration,Is the product demo well integrated into the drama?
+Linear TV (30s),Long Form,1,Communicate Superior Brand Benefit & Equity,Is the brand and/or benefit central to the drama in the video?
+Linear TV (30s),Long Form,2,Clear Benefit Visuals,Does the video include clear benefit visuals that highlight what makes the brand superior?
+Linear TV (30s),Long Form,3,Get and Hold Attention with TV Drama,"Does the video use TV drama (i.e. engaging sound design, being surprisingly familiar) to break through the clutter of TV commercials?"
+Linear TV (30s),Long Form,4,Emotional Connection,"Does the video leverage drama to evoke a positive reaction towards the brand (i.e make you laugh, cry, or feel)?"
+Linear TV (30s),Long Form,5,Leverages Brand Assets in a TV-Relevant Way,"Are brand assets (logos, signature audio, jingles, colors) integrated in a way suited to TV?"
+Linear TV (30s),Long Form,6,Audio Branding Emphasis,Is there a strong emphasis on audio assets that reinforce brand identity?
+Linear TV (30s),Long Form,7,Simple & Clear,"Does the video use familiar scenes, characters, or settings to keep the drama simple?"
+Linear TV (30s),Long Form,8,Product Integration,Is the product demo well integrated into the drama?
+Online Video (OLV),Long Form,1,Works Without Sound,"Can the creative messaging be understood without sound through the use of strong visuals, readable text overlays, or subtitles to communicate the key message?"
+Online Video (OLV),Long Form,2,Captures Attention Immediately,Is the key message delivered within the first few seconds to engage viewers?
+Online Video (OLV),Long Form,3,Upfront Branding,Is the brand highlighted within the first few seconds of the video?
+Online Video (OLV),Long Form,4,Showcases Brand Clearly and Consistently,Is the brand logo or brand assets featured prominently and consistenly throughout the video to reinforce brand recognition?
+Online Video (OLV),Long Form,5,Communicates Benefits Visually,"Are the product benefits presented in a straightforward, visual manner so viewers can grasp the value without relying on audio?"
+OTT (15s),Long Form,1,Upfront Branding,Is the brand highlighted within the first few seconds of the video?
+OTT (15s),Long Form,2,Brand Centrality,Is the brand or product featured as the star of the ad so that it is memorable within the story?
+OTT (15s),Long Form,3,Key Benefits  Communication,Are the brand or product benefits repeated throughout the ad clearly and concisely without overwhelming the viewer?
+OTT (15s),Long Form,4,Emotion & Close-Ups - Facial Expressions,Does the ad use close-ups of facial expressions to showcase emotion?
+OTT (15s),Long Form,5,"Immersive, Multi-Sensory Experience","Does the ad use dynamic visuals, music, transitions or other sensory elements to create a multi-sensory experience and engage viewers?"
+OTT (30s),Long Form,1,Upfront Branding,Is the brand highlighted within the first few seconds of the video?
+OTT (30s),Long Form,2,Brand Centrality,Is the brand or product featured as the star of the ad so that it is memorable within the story?
+OTT (30s),Long Form,3,Key Benefits  Communication,Are the brand or product benefits repeated throughout the ad clearly and concisely without overwhelming the viewer?
+OTT (30s),Long Form,4,Emotion & Close-Ups - Facial Expressions,Does the ad use close-ups of facial expressions to showcase emotion?
+OTT (30s),Long Form,5,"Immersive, Multi-Sensory Experience","Does the ad use dynamic visuals, music, transitions or other sensory elements to create a multi-sensory experience and engage viewers?"
+Rewarded OLV,Long Form,1,Works Without Sound,"Can the creative messaging be understood without sound through the use of strong visuals, readable text overlays, or subtitles to communicate the key message?"
+Rewarded OLV,Long Form,2,Captures Attention Immediately,Is the key message delivered within the first few seconds to engage viewers?
+Rewarded OLV,Long Form,3,Upfront Branding,Is the brand highlighted within the first few seconds of the video?
+Rewarded OLV,Long Form,4,Showcases Brand Clearly and Consistently,Is the brand logo or brand assets featured prominently and consistenly throughout the video to reinforce brand recognition?
+Rewarded OLV,Long Form,5,Communicates Benefits Visually,"Are the product benefits presented in a straightforward, visual manner so viewers can grasp the value without relying on audio?"
+TikTok,Short Form or Social,1,Showcase Product Immediately,Does the video feature the product within the first 2 seconds?
+TikTok,Short Form or Social,2,Relatability,Does the video feature everyday scenarios or problems that viewers commonly experience and can relate to?
+TikTok,Short Form or Social,3,Dynamic Visual Engagement,"Does the video utilize point of view (POV) perspectives, frequent setting changes, or active camera movements (e.g.,tilting, panning) to prevent static imagery and maintain high viewer attention?"
+TikTok,Short Form or Social,4,Contextual Benefit Integration,"Are product benefits narrated or displayed via text as they visually occur on screen (e.g., dissolving, cleaning), to create a synchronized link between the message and the visual proof?"
+TikTok,Short Form or Social,5,Visualized Sensory Appeal,"Does the video emphasizes the physical texture, appearance, or ""in-action"" performance of the product through close-ups or visual effects to stimulate sensory engagement and illustrate effectiveness?"
+TikTok,Short Form or Social,6,Upbeat Tone,"Does the video use energetic, lively music to create an upbeat tone?"
+TikTok,Short Form or Social,7,Social Validation,Does the video validate the product's value through visible human reactions or compliments?
+YouTube Bumper (6s),Long Form,1,Attention - Immersive Story,Does the video have an immersive story from the start that hooks and sustains attention?
+YouTube Bumper (6s),Long Form,2,Attention - Pacing & Framing,Does the video use engaging pacing and tight framing?
+YouTube Bumper (6s),Long Form,3,Attention - Multiple Shots,Does the video integrate 2+ shots in the first 2 seconds?
+YouTube Bumper (6s),Long Form,4,Attention - Audio & Text Support,Does the video use audio and text to support the story and reinforce key messages?
+YouTube Bumper (6s),Long Form,5,Brand - Early Introduction,Is the brand or product introduced in the first 2 seconds?
+YouTube Bumper (6s),Long Form,6,Brand - Audio Mentions,Does the video include audio brand mentions to reinforce branding?
+YouTube Bumper (6s),Long Form,7,Connection - Consumer Experience,Does the video create connections through the experience of the product that helps viewers think or feel something?
+YouTube Bumper (6s),Long Form,8,Connection - Storytelling Techniques,"Does the video use storytelling techniques like humor, surprise, or intrigue to engage viewers?"
+YouTube Bumper (6s),Long Form,9,Direction - Clear Call to Action,"Does the video include a clear and concise call-to-action driving a specific objective (e.g., ""Buy Tide"")?"
+YouTube Non-Skip (15s),Long Form,10,Direction - Reinforced Call to Action,Is the onscreen  call-to-action reinforced with voice-over or audio to ensure the message stands out?
+YouTube Non-Skip (15s),Long Form,1,Attention - Immersive Story,Does the video have an immersive story from the start that hooks and sustains attention?
+YouTube Non-Skip (15s),Long Form,2,Attention - Pacing & Framing,Does the video use engaging pacing and tight framing?
+YouTube Non-Skip (15s),Long Form,3,Attention - Multiple Shots,Does the video integrate 5+ shots in the first 5 seconds?
+YouTube Non-Skip (15s),Long Form,4,Attention - Audio & Text Support,Does the video use audio and text to support the story and reinforce key messages?
+YouTube Non-Skip (15s),Long Form,5,Brand - Early Introduction,Is the brand or product introduced in the first 5 seconds?
+YouTube Non-Skip (15s),Long Form,6,Brand - Audio Mentions,Does the video include audio brand mentions to reinforce branding?
+YouTube Non-Skip (15s),Long Form,7,Connection - Consumer Experience,Does the video create connections through the experience of the product that helps viewers think or feel something?
+YouTube Non-Skip (15s),Long Form,8,Connection - Storytelling Techniques,"Does the video use storytelling techniques like humor, surprise, or intrigue to engage viewers?"
+YouTube Non-Skip (15s),Long Form,9,Direction - Clear Call to Action,"Does the video include a clear and concise call-to-action driving a specific objective (e.g., ""Buy Tide"")?"
+YouTube Non-Skip (15s),Long Form,10,Direction - Reinforced Call to Action,Is the onscreen  call-to-action reinforced with voice-over or audio to ensure the message stands out?
