@@ -1347,7 +1347,95 @@ def log_analysis_results(results, video_file_name, brand_name, brand_display_nam
    
    except Exception as e:
        return None, f"Logging failed: {str(e)}"
-    
+
+def log_feature_extraction(sheet_id, analysis_id, timestamp, feature_responses):
+   """
+   Log feature extraction results to Google Sheets.
+   Args:
+       sheet_id: Google Sheet ID for social_feature_extraction_log
+       analysis_id: Unique analysis identifier
+       timestamp: Timestamp of analysis
+       feature_responses: List of dicts with feature_id, feature_name, response
+   """
+   try:
+       rows = []
+       for feature in feature_responses:
+           rows.append([
+               analysis_id,
+               timestamp,
+               feature['feature_id'],
+               feature['feature_name'],
+               feature['response']
+           ])
+       append_to_gsheet(sheet_id, rows)
+       st.success(f"✓ Feature extraction logged: {len(rows)} features")
+   except Exception as e:
+       st.error(f"Feature extraction logging failed: {str(e)}")
+       import traceback
+       st.error(f"Full error: {traceback.format_exc()}")
+
+def log_criteria_extraction(sheet_id, analysis_id, timestamp, criteria_responses):
+   """
+   Log criteria extraction results to Google Sheets.
+   Args:
+       sheet_id: Google Sheet ID for criteria_extraction_log
+       analysis_id: Unique analysis identifier
+       timestamp: Timestamp of analysis
+       criteria_responses: List of dicts with criteria_id, criteria_name, response
+   """
+   try:
+       rows = []
+       for criterion in criteria_responses:
+           rows.append([
+               analysis_id,
+               timestamp,
+               criterion['criteria_id'],
+               criterion['criteria_name'],
+               criterion['response']
+           ])
+       append_to_gsheet(sheet_id, rows)
+       st.success(f"✓ Criteria extraction logged: {len(rows)} criteria")
+   except Exception as e:
+       st.error(f"Criteria extraction logging failed: {str(e)}")
+       import traceback
+       st.error(f"Full error: {traceback.format_exc()}")
+
+def log_creative_best_practice_summary(sheet_id, analysis_id, timestamp, summary_text):
+   """
+   Log creative best practice summary to Google Sheets.
+   Args:
+       sheet_id: Google Sheet ID for summary_creative_best_practice_log
+       analysis_id: Unique analysis identifier
+       timestamp: Timestamp of analysis
+       summary_text: Summary text from AI
+   """
+   try:
+       rows = [[analysis_id, timestamp, summary_text]]
+       append_to_gsheet(sheet_id, rows)
+       st.success(f"✓ Summary logged")
+   except Exception as e:
+       st.error(f"Summary logging failed: {str(e)}")
+       import traceback
+       st.error(f"Full error: {traceback.format_exc()}")
+
+def log_ai_recommendation(sheet_id, analysis_id, timestamp, recommendation_text):
+   """
+   Log AI recommendation to Google Sheets.
+   Args:
+       sheet_id: Google Sheet ID for ai_recommendation_log
+       analysis_id: Unique analysis identifier
+       timestamp: Timestamp of analysis
+       recommendation_text: AI recommendation text
+   """
+   try:
+       rows = [[analysis_id, timestamp, recommendation_text]]
+       append_to_gsheet(sheet_id, rows)
+       st.success(f"✓ AI recommendation logged")
+   except Exception as e:
+       st.error(f"AI recommendation logging failed: {str(e)}")
+       import traceback
+       st.error(f"Full error: {traceback.format_exc()}")
+
 # AI Recommendation
 def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_api_key):
     """Get AI recommendation using LangChain and Google Gemini"""
