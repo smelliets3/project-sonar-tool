@@ -1292,6 +1292,7 @@ def format_long_form_caption_with_plurals(sim_num, total, va_count, audio_count,
             f"while the remaining {no_branding_pct:.0f}% of seconds had No Branding Present "
             f"or were non-attentive.")
 
+#AI Recommendation Retry Logic
 def call_gemini_with_retry(client, model, system_instruction, user_prompt, max_retries=4, base_delay=2):
     """
     Retry logic helpfer function 
@@ -1338,6 +1339,389 @@ def call_gemini_with_retry(client, model, system_instruction, user_prompt, max_r
     # --- RETRY LOGIC ---
 
     return "Failed to get response after maximum retries."
+
+#AI Recommendation API Calls (Short Form/Social = 4 calls, Long Form = 3 calls)
+def extract_features_from_video(video_file_obj, analysis_id, timestamp, google_api_key):
+   """
+   SHORT FORM CALL #1: Extract features from video using AI.
+   Args:
+       video_file_obj: Gemini uploaded file object
+       analysis_id: Unique analysis identifier
+       timestamp: Timestamp of analysis
+       google_api_key: Google API key
+   Returns:
+       feature_output_response: List of dicts with feature_id, feature_name, response
+   """
+   try:
+       # Load features table
+       features_df = load_features_table()
+       if features_df is None:
+           return None
+       # Prepare feature list
+       feature_list = []
+       for _, row in features_df.iterrows():
+           feature_list.append({
+               'feature_id': str(row['feature_id']),
+               'feature_name': row['feature_name'],
+               'description': row['description']
+           })
+       # Prepare combined prompt
+       combined_prompts = "\n".join([
+           f"{feature['feature_id']} - {feature['feature_name']}: {feature['description']}"
+           for feature in feature_list
+       ])
+       # Construct query
+       query_text = f"""Analyze the following features and provide a concise description for each feature without unnecessary words or restating the question.
+Please provide the output in the format 'FeatureID - FeatureName: Response':
+{combined_prompts}"""
+       # System instruction
+       system_instruction = "You are a helpful assistant that likes to help people. Please provide answers without unnecessary phrases or restating the question."
+       # Call Gemini with retry logic - pass file object directly
+       client = genai.Client(api_key=google_api_key)
+       response_text = call_gemini_with_retry(
+           client=client,
+           model="gemini-2.0-flash-exp",
+           system_instruction=system_instruction,
+           user_prompt=[query_text, video_file_obj]  # ← FIXED: Pass file object directly in list
+       )
+       # Parse response using regex
+       import re
+       pattern = r"(\d+)\s*-\s*([^:]+):\s*(.+?)(?=\n\d+\s*-|\Z)"
+       matches = re.findall(pattern, response_text, re.DOTALL)
+       # Create feature_output_response
+       feature_output_response = []
+       for match in matches:
+           feature_id = match[0].strip()
+           feature_name = match[1].strip()
+           response = match[2].strip()
+           feature_output_response.append({
+               'feature_id': feature_id,
+               'feature_name': feature_name,
+               'response': response
+           })
+       # Log to Google Sheets
+       log_feature_extraction(
+           FEATURE_EXTRACTION_SHEET_ID,
+           analysis_id,
+           timestamp,
+           feature_output_response
+       )
+       return feature_output_response
+   except Exception as e:
+       st.error(f"Feature extraction failed: {e}")
+       return None
+
+def compare_features_to_criteria(feature_output_response, media_vehicle, analysis_id, timestamp, google_api_key):
+    """
+    SHORT FORM CALL #2: Compare feature extraction to creative best practices criteria.
+    
+    Args:
+        feature_output_response: Output from call #1
+        media_vehicle: Selected media vehicle
+        analysis_id: Unique analysis identifier
+        timestamp: Timestamp of analysis
+        google_api_key: Google API key
+        
+    Returns:
+        criteria_output_response: List of dicts with criteria_id, criteria_name, response
+    """
+    try:
+        # Load creative best practices and filter by media vehicle
+        practices_df = load_creative_best_practices_table()
+        if practices_df is None:
+            return None
+        
+        criteria_list = get_criteria_for_media_vehicle(media_vehicle, practices_df)
+        if not criteria_list:
+            st.warning(f"No criteria found for {media_vehicle}")
+            return None
+        
+        # Format feature extraction results
+        feature_text = "\n".join([
+            f"{f['feature_id']} - {f['feature_name']}: {f['response']}"
+            for f in feature_output_response
+        ])
+        
+        # Format criteria
+        criteria_text = "\n".join([
+            f"{c['criteria_id']} - {c['criteria_name']}: {c['description']}"
+            for c in criteria_list
+        ])
+        
+        # Construct query
+        query_text = f"""Here are the extracted features from the video:
+
+{feature_text}
+
+Now compare these features against the following creative best practice criteria for {media_vehicle}:
+
+{criteria_text}
+
+Determine if each criterion has been met. Provide specific examples and descriptions for each criterion that explains why it has or has not been met.
+
+Please provide the output in the format 'CriteriaID - CriteriaName: Response':"""
+        
+        # System instruction
+        system_instruction = "You are a helpful assistant that likes to help people. Please provide answers without unnecessary phrases or restating the question."
+        
+        # Call Gemini with retry logic
+        client = genai.Client(api_key=google_api_key)
+        response_text = call_gemini_with_retry(
+            client=client,
+            model="gemini-2.5-flash",
+            system_instruction=system_instruction,
+            user_prompt=query_text
+        )
+        
+        # Parse response using regex
+        import re
+        pattern = r"(\d+)\s*-\s*([^:]+):\s*(.+?)(?=\n\d+\s*-|\Z)"
+        matches = re.findall(pattern, response_text, re.DOTALL)
+        
+        # Create criteria_output_response
+        criteria_output_response = []
+        for match in matches:
+            criteria_id = match[0].strip()
+            criteria_name = match[1].strip()
+            response = match[2].strip()
+            
+            criteria_output_response.append({
+                'criteria_id': criteria_id,
+                'criteria_name': criteria_name,
+                'response': response
+            })
+        
+        # Log to Google Sheets
+        log_criteria_extraction(
+            CRITERIA_EXTRACTION_SHEET_ID,
+            analysis_id,
+            timestamp,
+            criteria_output_response
+        )
+        
+        return criteria_output_response
+        
+    except Exception as e:
+        st.error(f"Criteria comparison failed: {e}")
+        return None
+
+def summarize_criteria_and_suggest_improvements(criteria_output_response, media_vehicle, analysis_id, timestamp, google_api_key):
+    """
+    SHORT FORM CALL #3 / LONG FORM CALL #2: Summarize criteria output and provide improvement suggestions.
+    
+    Args:
+        criteria_output_response: Output from criteria assessment
+        media_vehicle: Selected media vehicle
+        analysis_id: Unique analysis identifier
+        timestamp: Timestamp of analysis
+        google_api_key: Google API key
+        
+    Returns:
+        creative_best_practice_summary: Summary text from AI
+    """
+    try:
+        # Format criteria responses
+        criteria_text = "\n".join([
+            f"{c['criteria_id']} - {c['criteria_name']}: {c['response']}"
+            for c in criteria_output_response
+        ])
+        
+        # Construct query
+        query_text = f"""Please analyze the following criteria assessment results:
+
+{criteria_text}
+
+Summarize whether the creative aligns with creative best practices on {media_vehicle}. Also provide suggestions for improvement to the creative that will make it better suited for the media vehicle based on what the criteria is.
+
+Structure your response as:
+Summary: [Your summary here]
+Suggestions: [Your suggestions here]"""
+        
+        # System instruction
+        system_instruction = "You are a helpful assistant that likes to help people. Please provide answers without unnecessary phrases or restating the question."
+        
+        # Call Gemini with retry logic
+        client = genai.Client(api_key=google_api_key)
+        creative_best_practice_summary = call_gemini_with_retry(
+            client=client,
+            model="gemini-2.5-flash",
+            system_instruction=system_instruction,
+            user_prompt=query_text
+        )
+        
+        # Log to Google Sheets
+        log_creative_best_practice_summary(
+            SUMMARY_BEST_PRACTICE_SHEET_ID,
+            analysis_id,
+            timestamp,
+            creative_best_practice_summary
+        )
+        
+        return creative_best_practice_summary
+        
+    except Exception as e:
+        st.error(f"Criteria summary failed: {e}")
+        return None
+
+def assess_criteria_from_video_longform(video_file_obj, media_vehicle, analysis_id, timestamp, google_api_key):
+   """
+   LONG FORM CALL #1: Assess criteria directly from video (no feature extraction step).
+   Args:
+       video_file_obj: Gemini uploaded file object
+       media_vehicle: Selected media vehicle
+       analysis_id: Unique analysis identifier
+       timestamp: Timestamp of analysis
+       google_api_key: Google API key
+   Returns:
+       criteria_output_response: List of dicts with criteria_id, criteria_name, response
+   """
+   try:
+       # Load creative best practices and filter by media vehicle
+       practices_df = load_creative_best_practices_table()
+       if practices_df is None:
+           return None
+       criteria_list = get_criteria_for_media_vehicle(media_vehicle, practices_df)
+       if not criteria_list:
+           st.warning(f"No criteria found for {media_vehicle}")
+           return None
+       # Format criteria
+       combined_prompts = "\n".join([
+           f"{c['criteria_id']} - {c['criteria_name']}: {c['description']}"
+           for c in criteria_list
+       ])
+       # Construct query
+       query_text = f"""Analyze the video against the following creative best practice criteria for {media_vehicle}:
+{combined_prompts}
+Provide a concise description for each criterion without unnecessary words or restating the question. Provide specific examples or descriptions for each criterion that explains why it has or has not been met.
+Please provide the output in the format 'CriteriaID - CriteriaName: Response':"""
+       # System instruction
+       system_instruction = "You are a helpful assistant that likes to help people. Please provide answers without unnecessary phrases or restating the question."
+       # Call Gemini with retry logic - pass file object directly
+       client = genai.Client(api_key=google_api_key)
+       response_text = call_gemini_with_retry(
+           client=client,
+           model="gemini-2.0-flash-exp",
+           system_instruction=system_instruction,
+           user_prompt=[query_text, video_file_obj]  # ← FIXED: Pass file object directly in list
+       )
+       # Parse response using regex
+       import re
+       pattern = r"(\d+)\s*-\s*([^:]+):\s*(.+?)(?=\n\d+\s*-|\Z)"
+       matches = re.findall(pattern, response_text, re.DOTALL)
+       # Create criteria_output_response
+       criteria_output_response = []
+       for match in matches:
+           criteria_id = match[0].strip()
+           criteria_name = match[1].strip()
+           response = match[2].strip()
+           criteria_output_response.append({
+               'criteria_id': criteria_id,
+               'criteria_name': criteria_name,
+               'response': response
+           })
+       # Log to Google Sheets (same sheet as Short Form)
+       log_criteria_extraction(
+           CRITERIA_EXTRACTION_SHEET_ID,
+           analysis_id,
+           timestamp,
+           criteria_output_response
+       )
+       return criteria_output_response
+   except Exception as e:
+       st.error(f"Long form criteria assessment failed: {e}")
+       return None
+    
+def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_api_key, 
+                          criteria_output_response=None, creative_best_practice_summary=None,
+                          analysis_id=None, timestamp=None):
+    """
+    SHORT FORM CALL #4 / LONG FORM CALL #3: Get AI recommendation using enhanced context.
+    
+    This is the final call that combines all previous analysis results.
+    """
+    try:
+        # Configure the API key
+        client = genai.Client(api_key=google_api_key)
+
+        sys_instruct = """You are an expert media strategist and advertising analyst.
+        Your job is to provide recommendations about whether a video advertisement should be placed on a specific media vehicle based on branding and attention analysis results as well as results of creative best practices comparisons. Avoid strong language like "unacceptable" or "extremely" in your response.
+        
+        """
+
+        user_prompt = f"""
+        DATA TO ANALYZE:
+        Brand: {brand_name}
+        Intended Media Vehicle: {media_vehicle}
+
+        Branding and Attention Analysis Results:
+        {analysis_summary}
+        """
+        
+        # Add criteria output if available
+        if criteria_output_response:
+            criteria_text = "\n".join([
+                f"{c['criteria_id']} - {c['criteria_name']}: {c['response']}"
+                for c in criteria_output_response
+            ])
+            user_prompt += f"""
+        
+        Creative Best Practice Criteria Assessment:
+        {criteria_text}
+        """
+        
+        # Add summary if available
+        if creative_best_practice_summary:
+            user_prompt += f"""
+        
+        Creative Best Practice Summary and Suggestions:
+        {creative_best_practice_summary}
+        """
+        
+        user_prompt += f"""
+
+        Based on this analysis, should this video be placed on {media_vehicle}?
+        
+        Format your response in this exact structures with each section on a new line, each bullet point on its own line, and a line break between sections :
+        **Recommendation:** [Recommended / Not Recommended]
+        
+        **Key Reasoning:**
+        Explain the key reasons in 2-3 sentences using specific data from the analysis (branding %, attention metrics, criteria assessment).
+        
+        **What's Working:**
+        [Strength 1 - be specific]
+        [Strength 2 - be specific]
+        [Strength 3 - be specific]
+        
+        **What Can Improve:**
+        [Concrete, actionable change 1]
+        [Concrete, actionable change 2]
+        [Concrete, actionable change 3] 
+        
+        **Bottom Line:**
+        One sentence - should this run as-is, or does it need changes first?
+        """
+        
+        # --- RETRY LOGIC ---
+        ai_recommendation = call_gemini_with_retry(
+            client=client,
+            model="gemini-2.5-flash",
+            system_instruction=sys_instruct,
+            user_prompt=user_prompt
+        )
+        
+        # Log to Google Sheets if analysis_id and timestamp provided
+        if analysis_id and timestamp:
+            log_ai_recommendation(
+                AI_RECOMMENDATION_SHEET_ID,
+                analysis_id,
+                timestamp,
+                ai_recommendation
+            )
+        
+        return ai_recommendation
+        
+    except Exception as e:
+        return f"Error generating AI recommendation: {e}. Please check your Google API key and try again."
 
 def log_analysis_results(results, video_file_name, brand_name, brand_display_name, media_vehicle,
                        final_categories, audio_results, visual_results):
@@ -1507,73 +1891,6 @@ def log_ai_recommendation(sheet_id, analysis_id, timestamp, recommendation_text)
        st.error(f"AI recommendation logging failed: {str(e)}")
        import traceback
        st.error(f"Full error: {traceback.format_exc()}")
-
-# AI Recommendation
-def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_api_key):
-    """Get AI recommendation using LangChain and Google Gemini"""
-    try:
-        # Configure the API key
-        client = genai.Client(api_key=google_api_key)
-
-        sys_instruct = """You are an expert media strategist and advertising analyst.
-        Your job is to provide recommendations about whether a video advertisement should be placed on a specific media vehicle based on branding and attention analysis results. Avoid strong language like "unacceptable" or "extremely" in your response.
-        
-        Consider these factors:
-        1. Brand presence strength (audio + visual)
-        2. Media vehicle requirements
-        3. Audience attention patterns
-        4. Consumer experience
-        5. Brand recall effectiveness"""
-
-        user_prompt = f"""
-        DATA TO ANALYZE:
-        Brand: {brand_name}
-        Intended Media Vehicle: {media_vehicle}
-
-        Branding and Attention Analysis Results:
-        {analysis_summary}
-
-        Based on this analysis, should this video be placed on {media_vehicle}? 
-        
-        Please provide:
-        1. Is the creative recommended for {media_vehicle}? (Highly Recommended / Recommended / Conditional / Not Recommended)
-        2. Key reasoning points
-        3. Specific suggestions for optimization if needed 
-        """
-        
-        # --- RETRY LOGIC ---
-        max_retries = 4
-        base_delay = 2 
-        
-        for attempt in range(max_retries):
-            try:
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    config=types.GenerateContentConfig(
-                        system_instruction=sys_instruct
-                    ),
-                    contents=user_prompt
-                )
-                # If successful, return immediately
-                return response.text
-
-            except Exception as e:
-                # Check if the error is a 503 Service Unavailable (Overloaded)
-                if "503" in str(e) or "overloaded" in str(e).lower():
-                    if attempt < max_retries - 1:
-                        # Exponential backoff: Wait 2s, then 4s, then 8s...
-                        sleep_time = base_delay * (2 ** attempt)
-                        time.sleep(sleep_time)
-                        continue  # Try the loop again
-                    else:
-                        return "Google AI is currently overloaded. Please try again in a few minutes."
-                else:
-                    # If it's a completely different error (e.g. Invalid API Key), fail immediately
-                    raise e
-        # --- RETRY LOGIC ---
-        
-    except Exception as e:
-        return f"Error generating AI recommendation: {e}. Please check your Google API key and try again."
 
 def cleanup_temp_files(audio_file, frames_dir):
     try:
