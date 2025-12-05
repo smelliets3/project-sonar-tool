@@ -110,6 +110,12 @@ MODEL_NAME = st.secrets["AZURE_MODEL_NAME"]
 # Google Gemini API Key Configuration
 GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 
+# Google Sheets IDs for AI Enhancement Logging
+FEATURE_EXTRACTION_SHEET_ID = st.secrets["FEATURE_EXTRACTION_SHEET_ID"]
+CRITERIA_EXTRACTION_SHEET_ID = st.secrets["CRITERIA_EXTRACTION_SHEET_ID"]
+SUMMARY_BEST_PRACTICE_SHEET_ID = st.secrets["SUMMARY_BEST_PRACTICE_SHEET_ID"]
+AI_RECOMMENDATION_SHEET_ID = st.secrets["AI_RECOMMENDATION_SHEET_ID"]
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
     st.session_state.messages.append({
@@ -169,6 +175,38 @@ def get_video_duration(video_path):
     except Exception as e:
         st.error(f"Error getting video duration: {e}")
         return None
+
+def load_features_table():
+   """Load features table from CSV file"""
+   try:
+       features_df = pd.read_csv("features.csv")
+       return features_df
+   except Exception as e:
+       st.error(f"Error loading features table: {e}")
+       return None
+def load_creative_best_practices_table():
+   """Load creative best practices table from CSV file"""
+   try:
+       practices_df = pd.read_csv("creative_best_practices.csv")
+       return practices_df
+   except Exception as e:
+       st.error(f"Error loading creative best practices table: {e}")
+       return None
+def get_criteria_for_media_vehicle(media_vehicle, practices_df):
+   """Filter creative best practices by media vehicle"""
+   try:
+       filtered_df = practices_df[practices_df['media_vehicle'] == media_vehicle]
+       criteria_list = []
+       for _, row in filtered_df.iterrows():
+           criteria_list.append({
+               'criteria_id': row['criteria_id'],
+               'criteria_name': row['criteria_name'],
+               'description': row['description']
+           })
+       return criteria_list
+   except Exception as e:
+       st.error(f"Error filtering criteria: {e}")
+       return []
 
 # Audio Extraction + Analysis
 def extract_audio(video_path, output_audio_path):
