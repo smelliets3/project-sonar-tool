@@ -1380,7 +1380,7 @@ Please provide the output in the format 'FeatureID - FeatureName: Response':
        client = genai.Client(api_key=google_api_key)
        response_text = call_gemini_with_retry(
            client=client,
-           model="gemini-2.0-flash-exp",
+           model="gemini-2.5-flash",
            system_instruction=system_instruction,
            user_prompt=[query_text, video_file_obj]  # ← FIXED: Pass file object directly in list
        )
@@ -1600,7 +1600,7 @@ Please provide the output in the format 'CriteriaID - CriteriaName: Response':""
        client = genai.Client(api_key=google_api_key)
        response_text = call_gemini_with_retry(
            client=client,
-           model="gemini-2.0-flash-exp",
+           model="gemini-2.5-flash",
            system_instruction=system_instruction,
            user_prompt=[query_text, video_file_obj]  # ← FIXED: Pass file object directly in list
        )
