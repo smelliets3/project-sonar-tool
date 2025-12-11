@@ -1902,24 +1902,21 @@ def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_ap
 
         Based on this analysis, should this video be placed on {media_vehicle}?
         
-        Format your response in this exact structures with each section on a new line, each bullet point on its own line, and a line break between sections :
-        **Recommendation:** [Recommended / Not Recommended]
+        Format your response in this exact structures with each section on a new line, each bullet point on its own line, and a line break between sections:
+        **Recommendation:** [Recommended / Needs Improvement / Not Recommended]
         
         **Key Reasoning:**
-        Explain the key reasons in 2-3 sentences using specific data from the analysis (branding %, attention metrics, criteria assessment).
+        In 2-3 sentences, explain your recommendation using specific data from the analysis (use branding and/or attention analysis and criteria assessment results).
         
         **What's Working:**
-        [Strength 1 - be specific]
-        [Strength 2 - be specific]
-        [Strength 3 - be specific]
+		List the specific strengths with examples or descriptions that this video has. Only include genuine strengths based on the data provided. If the video has significant issues, you may list fewer improvements or none.
         
         **What Can Improve:**
-        [Concrete, actionable change 1]
-        [Concrete, actionable change 2]
-        [Concrete, actionable change 3] 
-        
-        **Bottom Line:**
-        One sentence - should this run as-is, or does it need changes first?
+		If ALL criteria HAVE been met, do not list improvements related to the criteria unless improvements need to be made based on branding percentage. Do not invent issues that don't exist just to fill space. 
+        If ALL criteria HAVE NOT been met, list what can be improved using identified gaps/weaknesses in the criteria assessment or in branding/attention metrics. 
+       
+        **Suggested Next Steps:**
+        Provide a brief, advisory statement about the path forward. Use suggestive language (e.g., "consider", "suggest") rather than directive language (e.g., "must", "requires", "needs to"). Frame this as helpful guidance, not requirements.
         """
         
         # --- RETRY LOGIC ---
