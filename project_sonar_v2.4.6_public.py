@@ -118,7 +118,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
     st.session_state.messages.append({
         "role": "assistant", 
-        "content": """Welcome to the Project Sonar Tool!
+        "content": """Welcome to the Creative Consumer Insights Tool!
 
 I'll help you analyze your video and provide recommendations for media placement.
 
@@ -2430,6 +2430,7 @@ def main():
                 st.markdown("<h3 style='text-decoration: underline;'>Branding Summary</h3>", unsafe_allow_html=True)
                 
                 st.markdown("#### Branding Timeline:")
+				st.caption("Second-by-second analysis showing when visual branding, audio branding, or both appear throughout the video.")
                 st.pyplot(results['timeline_fig'])
 
                 st.markdown("#### Branding Distribution:")
@@ -2441,8 +2442,9 @@ def main():
                 
                 if results.get('attention_results'):
                     st.markdown("<h3 style='text-decoration: underline;'>Branding Attention Analysis: Average Consumer Viewing Experience</h3>",unsafe_allow_html=True)   
-
-                    attn = results['attention_results']
+					st.caption("This section overlays attention norms for this media vehicle to determine the probability your brand will be seen or heard by the average consumer during a typical viewing experience.")
+                    
+					attn = results['attention_results']
 
                     media_vehicle = results.get('media_vehicle', 'Unknown Vehicle')
                     
@@ -2475,6 +2477,7 @@ def main():
                     # Display timeline visualization for Short Form
                     if 'timeline_viz' in attn:
                         st.subheader("Attentive Branding")
+						st.caption("This timeline shows which seconds the average consumer is watching (attentive) versus when they've scrolled away (non-attentive), based on attention norms. On social platforms, attention is typically front-loaded, so attentive seconds occur at the beginning of the video.")
                         st.pyplot(attn['timeline_viz'])
                         
                         # Add caption for Short Form
@@ -2494,11 +2497,13 @@ def main():
                     # Display simulation timelines for Long Form
                     if 'stacked_simulation_fig' in attn:
                         st.markdown("#### Viewing Experience Simulations:")
+						st.caption("These viewing experience simulations show which seconds the average consumer is watching (attentive) versus when they are not eyes-on-screen (non-attentive), based on attention norms. On non-social platforms, attention is typically sporadic, so attentive seconds occur randomly throughout the video.")
                         st.pyplot(attn['stacked_simulation_fig'])
 
                     # Display edited videos for Long Form
                     if 'edited_videos' in attn and len(attn['edited_videos']) == 3:
-                        st.markdown("#### Edited Videos: Viewing Simulations")
+                        st.markdown("#### Consumer Viewing Experience: Viewing Simulations")
+						st.caption("Each video corresponds to a viewing simulation above to show you what the average consumer sees based on the random attentive seconds selected.")
                             
                         col1, col2, col3 = st.columns(3)
                             
