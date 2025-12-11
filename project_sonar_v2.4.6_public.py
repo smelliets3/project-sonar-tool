@@ -2414,6 +2414,7 @@ def main():
             missing_secrets.append("GCP Service Account")
     except:
         missing_secrets.append("GCP Service Account")
+
     if missing_secrets:
         st.error(f"⚠️ Missing required secrets: {', '.join(missing_secrets)}")
         st.info("Please configure all required secrets in Streamlit Cloud Settings → Secrets")
@@ -2423,14 +2424,17 @@ def main():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
+
             if "results" in message:
-                # Display previous results
                 results = message["results"]
-                
-                st.markdown("<h3 style='text-decoration: underline;'>Branding Summary</h3>", unsafe_allow_html=True)
-                
+
+                st.markdown("<h3 style='text-decoration: underline;'>Branding Summary</h3>",
+                            unsafe_allow_html=True)
+
                 st.markdown("#### Branding Timeline:")
-                st.caption("Second-by-second analysis showing when visual branding, audio branding, or both appear throughout the video.")
+                st.caption(
+                    "Second-by-second analysis showing when visual branding, audio branding, or both appear throughout the video."
+                )
                 st.pyplot(results['timeline_fig'])
 
                 st.markdown("#### Branding Distribution:")
@@ -2441,121 +2445,89 @@ def main():
                 st.pyplot(results['summary_fig'])
 
                 st.divider()
-                
-                if results.get('attention_results'):
-                    st.markdown("<h3 style='text-decoration: underline;'>Branding Attention Analysis: Average Consumer Viewing Experience</h3>",unsafe_allow_html=True)   
-					st.caption("This section overlays attention norms for this media vehicle to determine the probability your brand will be seen or heard by the average consumer during a typical viewing experience.")
-                    
-					attn = results['attention_results']
 
+                # ---------------------
+                # ATTENTION RESULTS
+                # ---------------------
+                if results.get('attention_results'):
+
+                    st.markdown(
+                        "<h3 style='text-decoration: underline;'>Branding Attention Analysis: Average Consumer Viewing Experience</h3>",
+                        unsafe_allow_html=True
+                    )
+                    st.caption(
+                        "This section overlays attention norms for this media vehicle to determine the probability your brand will be seen or heard by the average consumer during a typical viewing experience."
+                    )
+
+                    attn = results['attention_results']
                     media_vehicle = results.get('media_vehicle', 'Unknown Vehicle')
-                    
-                    # Display the attentive branding rating
+
+                    # Display attentive branding rating
                     display_attentive_branding_rating(
-                        attn['attentive_branding_score'], 
+                        attn['attentive_branding_score'],
                         attn['media_form'],
                         media_vehicle
                     )
 
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.metric("Probability Brand Seen/Heard", 
-                                f"{attn['attentive_branding_score']:.0f}%")
-                        
+                        st.metric(
+                            "Probability Brand Seen/Heard",
+                            f"{attn['attentive_branding_score']:.0f}%"
+                        )
+
                     with col2:
-                        st.metric(f"Average Attentive Seconds on {media_vehicle}",
-                                f"{attn['attentive_seconds']} seconds")
-                        
-                        # Show watch time for Short Form
-#                        if attn['media_form'] == 'Short Form or Social' and 'watch_time_seconds' in attn:
-#                            st.metric("Average Watch Time", 
-#                                    f"{attn['watch_time_seconds']} seconds")
-                        
-                        # Show branding percentage for Long Form
-#                        if attn['media_form'] == 'Long Form' and 'branding_percentage' in attn:
-#                            st.metric("Overall Branding %", 
-#                                    f"{attn['branding_percentage']:.0f}%")
-                    
-                    # Display timeline visualization for Short Form
+                        st.metric(
+                            f"Average Attentive Seconds on {media_vehicle}",
+                            f"{attn['attentive_seconds']} seconds"
+                        )
+
+                    # Short-form attention timeline
                     if 'timeline_viz' in attn:
                         st.subheader("Attentive Branding")
-						st.caption("This timeline shows which seconds the average consumer is watching (attentive) versus when they've scrolled away (non-attentive), based on attention norms. On social platforms, attention is typically front-loaded, so attentive seconds occur at the beginning of the video.")
+                        st.caption(
+                            "This timeline shows which seconds the average consumer is watching (attentive) versus when they've scrolled away (non-attentive), based on attention norms. On social platforms, attention is typically front-loaded."
+                        )
                         st.pyplot(attn['timeline_viz'])
-                        
-                        # Add caption for Short Form
-                        #caption_stats = calculate_short_form_caption_stats(
-                            #message['results']['attention_results']['audio_results'],
-                            #message['results']['attention_results']['visual_results'],
-                            #attn['watch_time_seconds']
-                        #)
-                        #caption_text = format_caption_with_plurals(
-                            #caption_stats['total_branding_seconds'],
-                            #caption_stats['visual_and_audio_count'],
-                            #caption_stats['audio_only_count'],
-                            #caption_stats['visual_only_count']
-                        #)
-                        #st.markdown(caption_text)
-                    
-                    # Display simulation timelines for Long Form
+
+                    # Long-form simulation visualizations
                     if 'stacked_simulation_fig' in attn:
                         st.markdown("#### Viewing Experience Simulations:")
-						st.caption("These viewing experience simulations show which seconds the average consumer is watching (attentive) versus when they are not eyes-on-screen (non-attentive), based on attention norms. On non-social platforms, attention is typically sporadic, so attentive seconds occur randomly throughout the video.")
+                        st.caption(
+                            "These simulations show which seconds the average consumer is attentive vs. non-attentive on non-social platforms, where attention is more sporadic."
+                        )
                         st.pyplot(attn['stacked_simulation_fig'])
 
-                    # Display edited videos for Long Form
+                    # Long-form edited videos
                     if 'edited_videos' in attn and len(attn['edited_videos']) == 3:
                         st.markdown("#### Consumer Viewing Experience: Viewing Simulations")
-						st.caption("Each video corresponds to a viewing simulation above to show you what the average consumer sees based on the random attentive seconds selected.")
-                            
+                        st.caption(
+                            "Each video corresponds to a viewing simulation showing what the average consumer sees during attentive seconds."
+                        )
+
                         col1, col2, col3 = st.columns(3)
-                            
+
                         with col1:
                             st.markdown("**Viewing Simulation #1**")
                             st.video(attn['edited_videos'][0])
-                            
+
                         with col2:
                             st.markdown("**Viewing Simulation #2**")
                             st.video(attn['edited_videos'][1])
-                            
+
                         with col3:
                             st.markdown("**Viewing Simulation #3**")
                             st.video(attn['edited_videos'][2])
-                    
-                            # Add caption for each simulation
-                            #simulation = attn['simulations'][i-1]
-                            #caption_stats = calculate_long_form_simulation_caption_stats(
-                                #simulation,
-                                #message['results']['duration']
-                            #)
-                            #caption_text = format_long_form_caption_with_plurals(
-                                #i,
-                                #caption_stats['total_branding_seconds'],
-                                #caption_stats['visual_and_audio_count'],
-                                #caption_stats['audio_only_count'],
-                                #caption_stats['visual_only_count'],
-                                #caption_stats['branding_percentage'],
-                                #caption_stats['no_branding_percentage']
-                            #)
-#                            st.caption(caption_text)
-                            #a, b, c = st.columns(3)
-                            #with a:
-                                #st.metric("Visual and Audio Branding", 
-                                        #f"{caption_stats['visual_and_audio_count']} sec")
-                                
-                            #with b:
-                                #st.metric("Visual Branding Seen", 
-                                        #f"{caption_stats['visual_only_count']} sec")
-                                
-                           # with c:
-                                #st.metric("Audio Branding Heard", 
-                                        #f"{caption_stats['audio_only_count']} sec")
-                    
-                    # Keep the original distribution chart if it exists
+
+                    # If attention visualization exists
                     if results.get('attention_viz'):
                         st.pyplot(results['attention_viz'])
 
-                    # Display edited video for Short Form
-                    if attn['media_form'] == 'Short Form or Social' and 'edited_video' in attn:
+                    # Short-form edited video
+                    if (
+                        attn['media_form'] == 'Short Form or Social'
+                        and 'edited_video' in attn
+                    ):
                         st.subheader("Edited Video: Average Consumer Experience")
                         col1, col2 = st.columns([1, 5])
                         with col1:
@@ -2563,35 +2535,44 @@ def main():
 
                 st.divider()
 
-                st.markdown(f"<h3 style='text-decoration: underline;'>Is the creative best suited for {media_vehicle}?</h3>", unsafe_allow_html=True)
-                st.caption("The following recommendations were generated with help of AI. The insights are for informational purposes only and should be reviewed with human judgment.")
-                st.caption("This section uses AI to provide recommendations about whether a creative should be placed on the intended media vehicle specified as input. The recommendation is based on the branding, attention norms, and alignment to platform creative best practices.")
+                # AI Recommendation Summary
+                st.markdown(
+                    f"<h3 style='text-decoration: underline;'>Is the creative best suited for {media_vehicle}?</h3>",
+                    unsafe_allow_html=True
+                )
+                st.caption(
+                    "The following recommendations were generated with AI. These insights should be reviewed with human judgment."
+                )
+                st.caption(
+                    "This section evaluates whether the creative is well suited for the intended media vehicle using branding, attention norms, and platform best practices."
+                )
                 st.markdown(results['ai_recommendation'])
-        
-    # Input section
+
+    # ---------------------
+    # USER INPUT SECTION
+    # ---------------------
     st.subheader("Provide Your Inputs")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
         uploaded_file = st.file_uploader(
-            "Upload a video file", 
-            type=['mp4'], 
-            key=f"video_uploader_{st.session_state.input_key}" 
+            "Upload a video file",
+            type=['mp4'],
+            key=f"video_uploader_{st.session_state.input_key}"
         )
     
     with col2:
         selected_display_brand = st.selectbox(
-            "Select Brand", 
+            "Select Brand",
             list(BRAND_DISPLAY_MAP.keys()),
             key=f"brand_select_{st.session_state.input_key}"
         )
-        
         selected_brand = BRAND_DISPLAY_MAP[selected_display_brand]
     
     with col3:
         selected_media_vehicle = st.selectbox(
-            "Select Intended Media Vehicle", 
+            "Select Intended Media Vehicle",
             MEDIA_VEHICLES,
             key=f"vehicle_select_{st.session_state.input_key}"
         )
@@ -2605,24 +2586,28 @@ def main():
         elif not selected_media_vehicle:
             st.error("Please select a media vehicle")
         else:
-            # Add user message
-            user_message = f"Analyzing video: {uploaded_file.name}\nBrand: {selected_brand}\nMedia Vehicle: {selected_media_vehicle}"
+            user_message = (
+                f"Analyzing video: {uploaded_file.name}\n"
+                f"Brand: {selected_brand}\n"
+                f"Media Vehicle: {selected_media_vehicle}"
+            )
+
             st.session_state.messages.append({
                 "role": "user",
                 "content": user_message
             })
-            
+
             with st.chat_message("user"):
                 st.write(user_message)
-            
-            # Process the video using hardcoded API key
+
             with st.chat_message("assistant"):
                 st.write("Processing your video... This may take a few minutes depending on video length.")
-                
+
                 results, error = process_video_analysis(
-                    uploaded_file, selected_brand, selected_display_brand, selected_media_vehicle, GOOGLE_API_KEY, attention_df
+                    uploaded_file, selected_brand, selected_display_brand,
+                    selected_media_vehicle, GOOGLE_API_KEY, attention_df
                 )
-                
+
                 if error:
                     st.error(f"Analysis failed: {error}")
                     st.session_state.messages.append({
@@ -2630,19 +2615,22 @@ def main():
                         "content": f"Analysis failed: {error}"
                     })
                 else:
-                    # Display results
                     results['media_vehicle'] = selected_media_vehicle
-                    
-                    # Add assistant message with results
+
                     st.session_state.messages.append({
                         "role": "assistant",
-                        "content": "**Analysis Complete!**\n\nI've analyzed your video and generated recommendations. Check the detailed results below!",
+                        "content": (
+                            "**Analysis Complete!**\n\n"
+                            "I've analyzed your video and generated recommendations. "
+                            "Scroll down to view the detailed results."
+                        ),
                         "results": results
                     })
 
                     st.session_state.input_key += 1
-            
+
             st.rerun()
+
 
 if __name__ == "__main__":
     main()
