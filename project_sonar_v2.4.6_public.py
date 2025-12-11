@@ -2430,7 +2430,7 @@ def main():
                 st.markdown("<h3 style='text-decoration: underline;'>Branding Summary</h3>", unsafe_allow_html=True)
                 
                 st.markdown("#### Branding Timeline:")
-				st.caption("Second-by-second analysis showing when visual branding, audio branding, or both appear throughout the video.")
+				st.caption("Second-by-second analysis showing when visual branding, audio branding, or both appear throughout the video".)
                 st.pyplot(results['timeline_fig'])
 
                 st.markdown("#### Branding Distribution:")
