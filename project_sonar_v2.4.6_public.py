@@ -1010,7 +1010,7 @@ def create_long_form_simulation_timeline(simulation_result, duration):
 
 # Attention Analysis
 def perform_attention_analysis(final_categories, audio_results, visual_results, 
-                                duration, media_vehicle, attention_df):
+                                duration, media_vehicle, attention_df, video_path):
     """
     Main function to perform attention-based branding analysis.
     
@@ -1044,7 +1044,24 @@ def perform_attention_analysis(final_categories, audio_results, visual_results,
             audio_results, visual_results, avg_attentive_seconds, 
             rounded_avg_watch_time, duration
         )
+
+        # Create edited video for Short Form
+        status_text = st.empty()
+        status_text.text("Generating edited video...")
         
+        # Generate unique identifier
+        import time
+        unique_id = f"{int(time.time())}_{uuid.uuid4().hex[:6]}"
+        
+        edited_video = create_edited_video_short_form(
+           video_path, results, duration, unique_id
+        )
+        
+        if edited_video:
+           results['edited_video'] = edited_video
+        
+        status_text.empty()
+                                    
     else:  # Long Form
         # Use simplified calculation (no Monte Carlo for score)
         results = analyze_long_form_simplified(
@@ -1063,6 +1080,25 @@ def perform_attention_analysis(final_categories, audio_results, visual_results,
         )
         
         results['simulations'] = simulations
+
+                # Create edited videos for Long Form (3 simulations)
+        status_text = st.empty()
+       
+        # Generate unique identifier
+        import time
+        unique_id = f"{int(time.time())}_{uuid.uuid4().hex[:6]}"
+        
+        # Show progress for video generation
+        for i in range(1, 4):
+            status_text.text(f"Generating edited video {i} of 3...")
+            time.sleep(0.1)  # Brief delay so user can see progress
+        edited_videos = create_edited_videos_long_form(
+            video_path, simulations, duration, unique_id
+        )
+        
+        if edited_videos:
+            results['edited_videos'] = edited_videos
+        status_text.empty()
     
     return results
 
@@ -1292,6 +1328,197 @@ def format_long_form_caption_with_plurals(sim_num, total, va_count, audio_count,
             f"while the remaining {no_branding_pct:.0f}% of seconds had No Branding Present "
             f"or were non-attentive.")
 
+def generate_ffmpeg_filter_complex_for_video_editing(non_attentive_seconds, duration, mute_audio=False):
+    """
+    Generate ffmpeg filter_complex string for blacking out non-attentive seconds
+    and adding "Consumer not watching" text.
+    
+    Args:
+        non_attentive_seconds: List of second numbers that should be blacked out
+        duration: Total video duration in seconds
+        mute_audio: If True, mute audio during non-attentive seconds
+        
+    Returns:
+        tuple: (video_filter_string, audio_filter_string)
+    """
+    if not non_attentive_seconds:
+        # No edits needed
+        return None, None
+    
+    # Sort seconds to process in order
+    non_attentive_seconds = sorted(non_attentive_seconds)
+    
+    # Build video filter for black overlays and text
+    video_filters = []
+    
+    for second in non_attentive_seconds:
+        # Convert second to time range (zero-based indexing)
+        # Second 1 = 0:00.00 to 0:00.99
+        start_time = second - 1  # Convert to 0-based
+        end_time = second - 0.01  # End just before next second
+        
+        # Black overlay filter
+        black_filter = f"drawbox=enable='between(t,{start_time},{end_time})':color=black:t=fill"
+        video_filters.append(black_filter)
+        
+        # Text overlay filter - white text at bottom center
+        text_filter = (f"drawtext=enable='between(t,{start_time},{end_time})':"
+                      f"text='Consumer not watching':"
+                      f"fontsize=48:"
+                      f"fontcolor=white:"
+                      f"x=(w-text_w)/2:"
+                      f"y=(h-text_h)/2")
+        video_filters.append(text_filter)
+    
+    # Combine all video filters
+    video_filter_string = ",".join(video_filters) if video_filters else None
+    
+    # Build audio filter for muting if needed
+    audio_filter_string = None
+    if mute_audio and non_attentive_seconds:
+        audio_filters = []
+        for second in non_attentive_seconds:
+            start_time = second - 1
+            end_time = second - 0.01
+            audio_filters.append(f"volume=enable='between(t,{start_time},{end_time})':volume=0")
+        
+        audio_filter_string = ",".join(audio_filters) if audio_filters else None
+    
+    return video_filter_string, audio_filter_string
+
+
+def create_edited_video_short_form(video_path, attention_results, duration, unique_id):
+   """
+   Create edited video for Short Form/Social showing consumer attention.
+   Blacks out screen and mutes audio during non-attentive seconds.
+   Args:
+       video_path: Path to original video
+       attention_results: Attention analysis results dict
+       duration: Video duration in seconds
+       unique_id: Unique identifier for this analysis (to prevent overwriting)
+   Returns:
+       output_path if successful, None if failed
+   """
+   try:
+       # Create output path with unique identifier
+       output_dir = "/mnt/user-data/outputs"
+       os.makedirs(output_dir, exist_ok=True)
+       output_filename = f"edited_video_short_form_{unique_id}.mp4"
+       output_path = os.path.join(output_dir, output_filename)
+       # Get audio and visual results from attention_results
+       audio_results = attention_results.get('audio_results', {})
+       visual_results = attention_results.get('visual_results', {})
+       attentive_seconds = attention_results.get('attentive_seconds', 0)
+       # Identify non-attentive seconds
+       non_attentive_seconds = []
+       for second in range(1, duration + 1):
+           if second > attentive_seconds:
+               non_attentive_seconds.append(second)
+       # If no non-attentive seconds, just copy the original video
+       if not non_attentive_seconds:
+           import shutil
+           shutil.copy2(video_path, output_path)
+           return output_path
+       # Generate filter strings
+       video_filter, audio_filter = generate_ffmpeg_filter_complex_for_video_editing(
+           non_attentive_seconds, duration, mute_audio=True
+       )
+       # Build ffmpeg command
+       cmd = ['ffmpeg', '-i', video_path, '-y']
+       # Add video filters
+       if video_filter:
+           cmd.extend(['-vf', video_filter])
+       # Add audio filters
+       if audio_filter:
+           cmd.extend(['-af', audio_filter])
+       # Output settings
+       cmd.extend([
+           '-c:v', 'libx264',  # H.264 codec
+           '-preset', 'medium',  # Balance between speed and quality
+           '-crf', '23',  # Quality (lower = better, 23 is default)
+           '-c:a', 'aac',  # Audio codec
+           '-b:a', '128k',  # Audio bitrate
+           output_path
+       ])
+       # Run ffmpeg
+       result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+       if os.path.exists(output_path):
+           return output_path
+       else:
+           return None
+   except subprocess.CalledProcessError as e:
+       st.error(f"Video editing failed: {e.stderr}")
+       return None
+   except Exception as e:
+       st.error(f"Video editing error: {e}")
+       return None
+
+def create_edited_videos_long_form(video_path, simulations, duration, unique_id):
+   """
+   Create 3 edited videos for Long Form showing different viewing simulations.
+   Blacks out screen during non-attentive seconds but keeps audio on.
+   Args:
+       video_path: Path to original video
+       simulations: List of 3 simulation dicts from attention analysis
+       duration: Video duration in seconds
+       unique_id: Unique identifier for this analysis (to prevent overwriting)
+   Returns:
+       List of output paths for the 3 edited videos, or None if failed
+   """
+   try:
+       edited_videos = []
+       for sim_num, simulation in enumerate(simulations, start=1):
+           # Create output path with unique identifier
+           output_dir = "/mnt/user-data/outputs"
+           os.makedirs(output_dir, exist_ok=True)
+           output_filename = f"viewing_simulation_{sim_num}_{unique_id}.mp4"
+           output_path = os.path.join(output_dir, output_filename)
+           # Get categories for this simulation
+           categories = simulation.get('categories', {})
+           # Identify non-attentive seconds
+           non_attentive_seconds = []
+           for second, category in categories.items():
+               if category == "Non-Attentive" or category == "Audio Branding Only (Non-Attentive)":
+                   non_attentive_seconds.append(second)
+           # If no non-attentive seconds, just copy the original video
+           if not non_attentive_seconds:
+               import shutil
+               temp_output = output_path
+               shutil.copy2(video_path, temp_output)
+               edited_videos.append(temp_output)
+               continue
+           # Generate filter strings (no audio muting for long form)
+           video_filter, _ = generate_ffmpeg_filter_complex_for_video_editing(
+               non_attentive_seconds, duration, mute_audio=False
+           )
+           # Build ffmpeg command
+           cmd = ['ffmpeg', '-i', video_path, '-y']
+           # Add video filters
+           if video_filter:
+               cmd.extend(['-vf', video_filter])
+           # Output settings
+           cmd.extend([
+               '-c:v', 'libx264',  # H.264 codec
+               '-preset', 'medium',  # Balance between speed and quality
+               '-crf', '23',  # Quality
+               '-c:a', 'copy',  # Copy audio without re-encoding (faster)
+               output_path
+           ])
+           # Run ffmpeg
+           result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+           if os.path.exists(output_path):
+               edited_videos.append(output_path)
+           else:
+               st.error(f"Failed to create simulation {sim_num} video")
+               return None
+       return edited_videos if len(edited_videos) == 3 else None
+   except subprocess.CalledProcessError as e:
+       st.error(f"Video editing failed: {e.stderr}")
+       return None
+   except Exception as e:
+       st.error(f"Video editing error: {e}")
+       return None
+       
 #AI Recommendation Retry Logic
 def call_gemini_with_retry(client, model, system_instruction, user_prompt, max_retries=4, base_delay=2):
     """
@@ -1977,7 +2204,7 @@ def process_video_analysis(video_file, brand_name, brand_display_name, media_veh
         if attention_df is not None:
             attention_results = perform_attention_analysis(
                 final_categories, audio_results, visual_results, 
-                duration, media_vehicle, attention_df
+                duration, media_vehicle, attention_df, video_path
             )
             
             if attention_results and attention_results['media_form'] == 'Short Form or Social':
@@ -2277,7 +2504,25 @@ def main():
                     if 'stacked_simulation_fig' in attn:
                         st.markdown("#### Viewing Experience Simulations:")
                         st.pyplot(attn['stacked_simulation_fig'])
+
+                    # Display edited videos for Long Form
+                    if 'edited_videos' in attn and len(attn['edited_videos']) == 3:
+                        st.markdown("#### Edited Videos: Viewing Simulations")
                             
+                        col1, col2, col3 = st.columns(3)
+                            
+                        with col1:
+                            st.markdown("**Viewing Simulation #1**")
+                            st.video(attn['edited_videos'][0])
+                            
+                        with col2:
+                            st.markdown("**Viewing Simulation #2**")
+                            st.video(attn['edited_videos'][1])
+                            
+                        with col3:
+                            st.markdown("**Viewing Simulation #3**")
+                            st.video(attn['edited_videos'][2])
+                    
                             # Add caption for each simulation
                             #simulation = attn['simulations'][i-1]
                             #caption_stats = calculate_long_form_simulation_caption_stats(
@@ -2310,6 +2555,13 @@ def main():
                     # Keep the original distribution chart if it exists
                     if results.get('attention_viz'):
                         st.pyplot(results['attention_viz'])
+
+                    # Display edited video for Short Form
+                    if attn['media_form'] == 'Short Form or Social' and 'edited_video' in attn:
+                        st.subheader("Edited Video: Average Consumer Experience")
+                        col1, col2 = st.columns([1, 5])
+                        with col1:
+                            st.video(attn['edited_video'])
 
                 st.divider()
 
@@ -2383,18 +2635,6 @@ def main():
                 else:
                     # Display results
                     results['media_vehicle'] = selected_media_vehicle
-                    
-                    st.subheader("Analysis Summary")
-                    st.text(results['analysis_summary'])
-
-                    st.subheader("Branding Timeline")
-                    st.pyplot(results['timeline_fig'])
-
-                    st.subheader("Branding Distribution")
-                    st.pyplot(results['summary_fig'])
-        
-                    st.subheader("AI Recommendation")
-                    st.markdown(results['ai_recommendation'])
                     
                     # Add assistant message with results
                     st.session_state.messages.append({
