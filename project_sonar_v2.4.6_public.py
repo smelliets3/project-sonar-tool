@@ -20,8 +20,6 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 
-st.set_page_config(layout="wide")
-
 # Google GenAI imports for AI recommendations with Gemini
 try:
     from google import genai
@@ -519,8 +517,14 @@ def create_summary_visualization(final_categories, duration):
     
     for bar, value in zip(bars, values):
         height = bar.get_height()
-        ax_summary.text(bar.get_x() + bar.get_width()/2., height + 1,
-                       f'{round(value)}%', ha='center', va='bottom', fontweight='bold')
+        # If bar is at or near 100%, place text inside the bar
+        if height >= 95:
+            ax_summary.text(bar.get_x() + bar.get_width()/2., height - 5,
+                            f'{round(value)}%', ha='center', va='top', fontweight='bold', color='black')
+        else:
+            # Otherwise place text above the bar
+            ax_summary.text(bar.get_x() + bar.get_width()/2., height + 1,
+                            f'{round(value)}%', ha='center', va='bottom', fontweight='bold')
     
     plt.setp(ax_summary.get_xticklabels(), rotation=15, ha="right")
     fig_summary.tight_layout()
@@ -1126,8 +1130,15 @@ def create_attention_visualization(attention_results):
     # Add value labels on bars
     for bar, value in zip(bars, values):
         height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2., height + 1,
-               f'{value:.0f}%', ha='center', va='bottom', fontweight='bold')
+    
+        # If bar is at or near 100%, place text inside the bar
+        if height >= 95:
+            ax.text(bar.get_x() + bar.get_width()/2., height - 5,
+                    f'{value:.0f}%', ha='center', va='top', fontweight='bold', color='black')
+        else:
+            # Otherwise place text above the bar
+            ax.text(bar.get_x() + bar.get_width()/2., height + 1,
+                    f'{value:.0f}%', ha='center', va='bottom', fontweight='bold')
     
     plt.setp(ax.get_xticklabels(), rotation=15, ha="right")
     fig.tight_layout()
@@ -2373,7 +2384,7 @@ Percentage of Branding Presence: {round(branding_percentage)}% of video duration
 
 # Streamlit UI
 def main():
-    st.title("🎬 AI Branding Analysis Chatbot")
+    st.title("Creative Consumer Insights Tool")
 
     # --- Initialize a reset counter ---
     if "input_key" not in st.session_state:
