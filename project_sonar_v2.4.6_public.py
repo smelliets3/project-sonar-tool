@@ -1386,23 +1386,14 @@ def generate_ffmpeg_filter_complex_for_video_editing(non_attentive_seconds, dura
     
     return video_filter_string, audio_filter_string
 
-
 def create_edited_video_short_form(video_path, attention_results, duration, unique_id):
    """
    Create edited video for Short Form/Social showing consumer attention.
    Blacks out screen and mutes audio during non-attentive seconds.
-   Args:
-       video_path: Path to original video
-       attention_results: Attention analysis results dict
-       duration: Video duration in seconds
-       unique_id: Unique identifier for this analysis (to prevent overwriting)
-   Returns:
-       output_path if successful, None if failed
    """
    try:
-       # Create output path with unique identifier
-       output_dir = "/mnt/user-data/outputs"
-       os.makedirs(output_dir, exist_ok=True)
+       # Create output path with unique identifier - USE TEMP DIR FOR PUBLIC DEPLOYMENT
+       output_dir = tempfile.gettempdir()
        output_filename = f"edited_video_short_form_{unique_id}.mp4"
        output_path = os.path.join(output_dir, output_filename)
        # Get audio and visual results from attention_results
@@ -1433,11 +1424,11 @@ def create_edited_video_short_form(video_path, attention_results, duration, uniq
            cmd.extend(['-af', audio_filter])
        # Output settings
        cmd.extend([
-           '-c:v', 'libx264',  # H.264 codec
-           '-preset', 'medium',  # Balance between speed and quality
-           '-crf', '23',  # Quality (lower = better, 23 is default)
-           '-c:a', 'aac',  # Audio codec
-           '-b:a', '128k',  # Audio bitrate
+           '-c:v', 'libx264',
+           '-preset', 'medium',
+           '-crf', '23',
+           '-c:a', 'aac',
+           '-b:a', '128k',
            output_path
        ])
        # Run ffmpeg
@@ -1457,20 +1448,12 @@ def create_edited_videos_long_form(video_path, simulations, duration, unique_id)
    """
    Create 3 edited videos for Long Form showing different viewing simulations.
    Blacks out screen during non-attentive seconds but keeps audio on.
-   Args:
-       video_path: Path to original video
-       simulations: List of 3 simulation dicts from attention analysis
-       duration: Video duration in seconds
-       unique_id: Unique identifier for this analysis (to prevent overwriting)
-   Returns:
-       List of output paths for the 3 edited videos, or None if failed
    """
    try:
        edited_videos = []
        for sim_num, simulation in enumerate(simulations, start=1):
-           # Create output path with unique identifier
-           output_dir = "/mnt/user-data/outputs"
-           os.makedirs(output_dir, exist_ok=True)
+           # Create output path with unique identifier - USE TEMP DIR FOR PUBLIC DEPLOYMENT
+           output_dir = tempfile.gettempdir()
            output_filename = f"viewing_simulation_{sim_num}_{unique_id}.mp4"
            output_path = os.path.join(output_dir, output_filename)
            # Get categories for this simulation
@@ -1498,10 +1481,10 @@ def create_edited_videos_long_form(video_path, simulations, duration, unique_id)
                cmd.extend(['-vf', video_filter])
            # Output settings
            cmd.extend([
-               '-c:v', 'libx264',  # H.264 codec
-               '-preset', 'medium',  # Balance between speed and quality
-               '-crf', '23',  # Quality
-               '-c:a', 'copy',  # Copy audio without re-encoding (faster)
+               '-c:v', 'libx264',
+               '-preset', 'medium',
+               '-crf', '23',
+               '-c:a', 'copy',
                output_path
            ])
            # Run ffmpeg
