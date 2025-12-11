@@ -2558,8 +2558,7 @@ def main():
 
                 st.markdown(f"<h3 style='text-decoration: underline;'>Is the creative best suited for {media_vehicle}?</h3>", unsafe_allow_html=True)
                 st.caption("The following recommendations were generated with help of AI. The insights are for informational purposes only and should be reviewed with human judgment.")
-                st.markdown("<p style='font-size:10pt;'><i>This section uses AI to provide recommendations about whether a creative should be placed on the intended media vehicle specified as input. " \
-                "The recommendation is based on the branding and attention analysis results.</i></p>", unsafe_allow_html=True)
+                st.caption("This section uses AI to provide recommendations about whether a creative should be placed on the intended media vehicle specified as input. The recommendation is based on the branding, attention norms, and alignment to platform creative best practices.")
                 st.markdown(results['ai_recommendation'])
         
     # Input section
