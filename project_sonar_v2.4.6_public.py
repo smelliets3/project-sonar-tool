@@ -118,7 +118,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
     st.session_state.messages.append({
         "role": "assistant", 
-        "content": """Welcome to the Creative Consumer Insights Tool!
+        "content": """Welcome to the Creative Consumer Insights Capability!
 
 I'll help you analyze your video and provide recommendations for media placement.
 
@@ -2381,7 +2381,7 @@ Percentage of Branding Presence: {round(branding_percentage)}% of video duration
 
 # Streamlit UI
 def main():
-    st.title("Creative Consumer Insights Tool")
+    st.title("Creative Consumer Insights Capability")
 
     # --- Initialize a reset counter ---
     if "input_key" not in st.session_state:
