@@ -1939,10 +1939,10 @@ def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_ap
         In 2-3 sentences, explain your recommendation using specific data from the analysis (use branding and/or attention analysis and criteria assessment results).
         
         **What's Working:**
-		List the specific strengths with examples or descriptions that this video has. Only include genuine strengths based on the data provided. If the video has significant issues, you may list fewer improvements or none.
+        List the specific strengths with examples or descriptions that this video has. Only include genuine strengths based on the data provided. If the video has significant issues, you may list fewer improvements or none.
         
         **What Can Improve:**
-		If ALL criteria HAVE been met, do not list improvements related to the criteria unless improvements need to be made based on branding percentage. Do not invent issues that don't exist just to fill space. 
+        If ALL criteria HAVE been met, do not list improvements related to the criteria unless improvements need to be made based on branding percentage. Do not invent issues that don't exist just to fill space. 
         If ALL criteria HAVE NOT been met, list what can be improved using identified gaps/weaknesses in the criteria assessment or in branding/attention metrics. 
        
         **Suggested Next Steps:**
@@ -2474,7 +2474,7 @@ def main():
                     f"{results['branding_percentage']:.0f}%"
                 )
 
-				display_branding_distribution(results['category_counts'], results['duration'])
+                display_branding_distribution(results['category_counts'], results['duration'])
 
                 st.divider()
 
