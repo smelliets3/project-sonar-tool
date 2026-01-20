@@ -2407,13 +2407,13 @@ def main():
     st.title("Creative Consumer Insights Capability")
     
 	st.markdown(
-        """
-        <p style='color:red; font-weight:bold;'>
-            ⚠️ This capability is intended for analytic use cases only. 
-            It is not approved for editing, recreating, or producing content of any kind.
-        </p>
-        """,
-        unsafe_allow_html=True
+	    """
+	    <p style='color:red; font-weight:bold;'>
+	        ⚠️ This capability is intended for analytic use cases only.<br>
+	        It is not approved for editing, recreating, or producing content of any kind.
+	    </p>
+	    """,
+	    unsafe_allow_html=True
 	)
 	
     # --- Initialize a reset counter ---
