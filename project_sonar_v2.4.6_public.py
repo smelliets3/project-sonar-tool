@@ -108,12 +108,6 @@ MODEL_NAME = st.secrets["AZURE_MODEL_NAME"]
 # Google Gemini API Key Configuration
 GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 
-# Google Sheets IDs for AI Enhancement Logging
-FEATURE_EXTRACTION_SHEET_ID = "1_yqI957bORGGTqGwN6CL8B31uXAxfnghGRYp_bzv95Y"
-CRITERIA_EXTRACTION_SHEET_ID = "1Ai0SkhYrn2XwLbPgCYO9ILzbvewO_Js1Q41qPSA4DWE"
-SUMMARY_BEST_PRACTICE_SHEET_ID = "1-psaUTnXRLJe7Bu7C_JPrxurvxaKsvU9Li0KT7zZy-o"
-AI_RECOMMENDATION_SHEET_ID = "1Y8RMwiuIAtvKOUP8MPhT2Si3nQKh1T8UEmb4lr9BcWE"
-
 if "messages" not in st.session_state:
     st.session_state.messages = []
     st.session_state.messages.append({
@@ -129,30 +123,6 @@ Please provide the following:
 
 Once you upload these, I'll analyze your video then provide AI-powered recommendations!"""
     })
-
-# Google Sheets Connection
-def get_gsheet_client():
-   """Authenticate using Streamlit secrets."""
-   scopes = [
-       "https://www.googleapis.com/auth/spreadsheets",
-       "https://www.googleapis.com/auth/drive"
-   ]
-   
-   service_account_info = dict(st.secrets["gcp_service_account"])
-   
-   creds = Credentials.from_service_account_info(service_account_info, scopes=scopes)
-   client = gspread.authorize(creds)
-   return client
-
-def append_to_gsheet(sheet_id, rows):
-    """
-    Append rows to a Google Sheet.
-    - sheet_id: the Google Sheet ID (from its URL)
-    - rows: list of lists, where each sublist is a row
-    """
-    client = get_gsheet_client()
-    sheet = client.open_by_key(sheet_id).sheet1  # assumes first tab
-    sheet.append_rows(rows, value_input_option="USER_ENTERED")
 
 # Helper functions
 def check_ffmpeg():
@@ -1650,13 +1620,6 @@ Please provide the output in the format 'FeatureID - FeatureName: Response':
                'feature_name': feature_name,
                'response': response
            })
-       # Log to Google Sheets
-       log_feature_extraction(
-           FEATURE_EXTRACTION_SHEET_ID,
-           analysis_id,
-           timestamp,
-           feature_output_response
-       )
        return feature_output_response
    except Exception as e:
        st.error(f"Feature extraction failed: {e}")
@@ -1742,14 +1705,6 @@ Please provide the output in the format 'CriteriaID - CriteriaName: Response':""
                 'response': response
             })
         
-        # Log to Google Sheets
-        log_criteria_extraction(
-            CRITERIA_EXTRACTION_SHEET_ID,
-            analysis_id,
-            timestamp,
-            criteria_output_response
-        )
-        
         return criteria_output_response
         
     except Exception as e:
@@ -1798,14 +1753,6 @@ Suggestions: [Your suggestions here]"""
             model="gemini-2.5-flash",
             system_instruction=system_instruction,
             user_prompt=query_text
-        )
-        
-        # Log to Google Sheets
-        log_creative_best_practice_summary(
-            SUMMARY_BEST_PRACTICE_SHEET_ID,
-            analysis_id,
-            timestamp,
-            creative_best_practice_summary
         )
         
         return creative_best_practice_summary
@@ -1870,13 +1817,6 @@ Please provide the output in the format 'CriteriaID - CriteriaName: Response':""
                'criteria_name': criteria_name,
                'response': response
            })
-       # Log to Google Sheets (same sheet as Short Form)
-       log_criteria_extraction(
-           CRITERIA_EXTRACTION_SHEET_ID,
-           analysis_id,
-           timestamp,
-           criteria_output_response
-       )
        return criteria_output_response
    except Exception as e:
        st.error(f"Long form criteria assessment failed: {e}")
@@ -1956,189 +1896,11 @@ def get_ai_recommendation(analysis_summary, brand_name, media_vehicle, google_ap
             system_instruction=sys_instruct,
             user_prompt=user_prompt
         )
-        
-        # Log to Google Sheets if analysis_id and timestamp provided
-        if analysis_id and timestamp:
-            log_ai_recommendation(
-                AI_RECOMMENDATION_SHEET_ID,
-                analysis_id,
-                timestamp,
-                ai_recommendation
-            )
-        
+      
         return ai_recommendation
         
     except Exception as e:
         return f"Error generating AI recommendation: {e}. Please check your Google API key and try again."
-
-def log_analysis_results(results, video_file_name, brand_name, brand_display_name, media_vehicle,
-                       final_categories, audio_results, visual_results):
-   """
-   Log analysis results to Google Sheets for tracking and benchmarking.
-   Creates two Google Sheets:
-   1. Second-by-second log (detailed second-by-second branding analysis)
-   2. Summary log (high-level summary metrics for each analysis)
-   """
-
-   try:
-       # --- Google Sheet IDs ---
-       SECOND_LOG_SHEET_ID = "1h7U-l_GQGFejELIHzhsR2nZzoa0LzwpbUiUEFE9IWgk"
-       SUMMARY_LOG_SHEET_ID = "1tjWzAmAdkkKbrtdg0vifvv-ikCU4wLWF8AeAEK-lqWg"
-       
-       # Generate unique analysis ID
-       unique_code = str(uuid.uuid4())[:8]
-       timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-       analysis_id = f"{timestamp}_{unique_code}"
-       
-       # Extract key result info
-       duration = results['duration']
-       category_counts = results['category_counts']
-       branding_percentage = results['branding_percentage']
-       attention_results = results.get('attention_results')
-       
-       # Determine media form
-       media_form = attention_results['media_form'] if attention_results else "Unknown"
-       
-       # --- FILE 1: Second-by-Second Log ---
-       second_data = []
-       for second in range(1, duration + 1):
-           branding_category = final_categories.get(second, "Unknown")
-           second_data.append([
-               analysis_id,
-               timestamp,
-               video_file_name,
-               brand_name,
-               media_vehicle,
-               media_form,
-               duration,
-               second,
-               branding_category,
-               brand_display_name
-           ])
-       
-       # --- FILE 2: Summary Log ---
-       visual_and_audio_pct = (category_counts['Visual and Audio Branding'] / duration * 100) if duration > 0 else 0
-       visual_only_pct = (category_counts['Visual Branding Only'] / duration * 100) if duration > 0 else 0
-       audio_only_pct = (category_counts['Audio Branding Only'] / duration * 100) if duration > 0 else 0
-       no_branding_pct = (category_counts['No Branding Present'] / duration * 100) if duration > 0 else 0
-       
-       attentive_branding_score = None
-       if attention_results:
-           attentive_branding_score = attention_results.get('attentive_branding_score')
-       
-       summary_data = [[
-           analysis_id,
-           timestamp,
-           video_file_name,
-           brand_name,
-           media_vehicle,
-           media_form,
-           duration,
-           round(visual_and_audio_pct, 2),
-           round(visual_only_pct, 2),
-           round(audio_only_pct, 2),
-           round(no_branding_pct, 2),
-           round(branding_percentage, 2),
-           round(attentive_branding_score, 2) if attentive_branding_score is not None else None,
-           brand_display_name
-       ]]
-       
-       # --- Upload to Google Sheets (DATA ONLY, NO HEADERS) ---
-       append_to_gsheet(SECOND_LOG_SHEET_ID, second_data)
-       append_to_gsheet(SUMMARY_LOG_SHEET_ID, summary_data)
-       
-       return analysis_id, timestamp, None
-   
-   except Exception as e:
-       return None, None, f"Logging failed: {str(e)}"
-
-def log_feature_extraction(sheet_id, analysis_id, timestamp, feature_responses):
-   """
-   Log feature extraction results to Google Sheets.
-   Args:
-       sheet_id: Google Sheet ID for social_feature_extraction_log
-       analysis_id: Unique analysis identifier
-       timestamp: Timestamp of analysis
-       feature_responses: List of dicts with feature_id, feature_name, response
-   """
-   try:
-       rows = []
-       for feature in feature_responses:
-           rows.append([
-               analysis_id,
-               timestamp,
-               feature['feature_id'],
-               feature['feature_name'],
-               feature['response']
-           ])
-       append_to_gsheet(sheet_id, rows)
-       st.success(f"✓ Feature extraction logged: {len(rows)} features")
-   except Exception as e:
-       st.error(f"Feature extraction logging failed: {str(e)}")
-       import traceback
-       st.error(f"Full error: {traceback.format_exc()}")
-
-def log_criteria_extraction(sheet_id, analysis_id, timestamp, criteria_responses):
-   """
-   Log criteria extraction results to Google Sheets.
-   Args:
-       sheet_id: Google Sheet ID for criteria_extraction_log
-       analysis_id: Unique analysis identifier
-       timestamp: Timestamp of analysis
-       criteria_responses: List of dicts with criteria_id, criteria_name, response
-   """
-   try:
-       rows = []
-       for criterion in criteria_responses:
-           rows.append([
-               analysis_id,
-               timestamp,
-               criterion['criteria_id'],
-               criterion['criteria_name'],
-               criterion['response']
-           ])
-       append_to_gsheet(sheet_id, rows)
-       st.success(f"✓ Criteria extraction logged: {len(rows)} criteria")
-   except Exception as e:
-       st.error(f"Criteria extraction logging failed: {str(e)}")
-       import traceback
-       st.error(f"Full error: {traceback.format_exc()}")
-
-def log_creative_best_practice_summary(sheet_id, analysis_id, timestamp, summary_text):
-   """
-   Log creative best practice summary to Google Sheets.
-   Args:
-       sheet_id: Google Sheet ID for summary_creative_best_practice_log
-       analysis_id: Unique analysis identifier
-       timestamp: Timestamp of analysis
-       summary_text: Summary text from AI
-   """
-   try:
-       rows = [[analysis_id, timestamp, summary_text]]
-       append_to_gsheet(sheet_id, rows)
-       st.success(f"✓ Summary logged")
-   except Exception as e:
-       st.error(f"Summary logging failed: {str(e)}")
-       import traceback
-       st.error(f"Full error: {traceback.format_exc()}")
-
-def log_ai_recommendation(sheet_id, analysis_id, timestamp, recommendation_text):
-   """
-   Log AI recommendation to Google Sheets.
-   Args:
-       sheet_id: Google Sheet ID for ai_recommendation_log
-       analysis_id: Unique analysis identifier
-       timestamp: Timestamp of analysis
-       recommendation_text: AI recommendation text
-   """
-   try:
-       rows = [[analysis_id, timestamp, recommendation_text]]
-       append_to_gsheet(sheet_id, rows)
-       st.success(f"✓ AI recommendation logged")
-   except Exception as e:
-       st.error(f"AI recommendation logging failed: {str(e)}")
-       import traceback
-       st.error(f"Full error: {traceback.format_exc()}")
 
 def cleanup_temp_files(audio_file, frames_dir):
     try:
@@ -2256,28 +2018,6 @@ Percentage of Branding Presence: {round(branding_percentage)}% of video duration
         
         # Create visualizations
         timeline_fig = create_timeline_visualization(final_categories, duration)
-        
-        # Log results to Google Sheets
-        analysis_id, timestamp_str, log_error = log_analysis_results(
-            {
-                'duration': duration,
-                'category_counts': category_counts,
-                'branding_percentage': branding_percentage,
-                'attention_results': attention_results
-            },
-            video_file.name,
-            brand_name,
-            brand_display_name,
-            media_vehicle,
-            final_categories,
-            audio_results,
-            visual_results
-        )
-        
-        if log_error:
-            st.warning(f"Results were not logged: {log_error}")
-        else:
-            st.success(f"Analysis logged with ID: {analysis_id}")
         
         # ============================================================================
         # ENHANCED AI RECOMMENDATION WITH MEDIA FORM LOGIC
