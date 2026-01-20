@@ -602,6 +602,40 @@ def get_attention_metrics(media_vehicle, attention_df):
     
     return result
 
+def get_short_form_scenarios(media_vehicle, attention_df):
+    """
+    Retrieve scenario cutoff points for Short Form media vehicles.
+    
+    Args:
+        media_vehicle: string, the media vehicle name
+        attention_df: pandas DataFrame with columns including scenario_1, scenario_2, scenario_3
+    
+    Returns:
+        dict with 'scenario_1', 'scenario_2', 'scenario_3' (seconds to show before blackout)
+        Returns None if media vehicle not found or not Short Form
+    """
+    vehicle_data = attention_df[attention_df['media_vehicle'] == media_vehicle]
+    
+    if vehicle_data.empty:
+        return None
+    
+    row = vehicle_data.iloc[0]
+    
+    # Only return scenarios if this is Short Form
+    if row['media_form'] != 'Short Form or Social':
+        return None
+    
+    # Check if scenario columns exist
+    if 'scenario_1' not in row or 'scenario_2' not in row or 'scenario_3' not in row:
+        st.warning(f"Scenario data not found for {media_vehicle}")
+        return None
+    
+    return {
+        'scenario_1': float(row['scenario_1']),
+        'scenario_2': float(row['scenario_2']),
+        'scenario_3': float(row['scenario_3'])
+    }
+
 # Analyze "Short Form or Social" Attention and Branding
 def analyze_short_form_with_watch_time(final_categories, audio_results, visual_results, 
                                         avg_attentive_seconds, rounded_avg_watch_time, duration):
@@ -1049,22 +1083,33 @@ def perform_attention_analysis(final_categories, audio_results, visual_results,
             rounded_avg_watch_time, duration
         )
 
-        # Create edited video for Short Form
+        # Create 3 edited videos for Short Form scenarios
         status_text = st.empty()
-        status_text.text("Generating edited video...")
         
-        # Generate unique identifier
-        import time
-        unique_id = f"{int(time.time())}_{uuid.uuid4().hex[:6]}"
+        # Get scenario data for this media vehicle
+        scenarios = get_short_form_scenarios(media_vehicle, attention_df)
         
-        edited_video = create_edited_video_short_form(
-           video_path, results, duration, unique_id
-        )
+        if scenarios:
+            # Generate unique identifier
+            import time
+            unique_id = f"{int(time.time())}_{uuid.uuid4().hex[:6]}"
+            
+            # Show progress for video generation
+            for i in range(1, 4):
+                status_text.text(f"Generating edited video {i} of 3...")
+                time.sleep(0.1)  # Brief delay so user can see progress
+            
+            edited_videos = create_edited_videos_short_form_scenarios(
+                video_path, scenarios, duration, unique_id
+            )
+            
+            if edited_videos:
+                results['edited_videos'] = edited_videos
+                results['scenarios'] = scenarios
+        else:
+            st.warning("Scenario data not available for this media vehicle")
         
-        if edited_video:
-           results['edited_video'] = edited_video
-        
-        status_text.empty()
+        status_text.empty() 
                                     
     else:  # Long Form
         # Use simplified calculation (no Monte Carlo for score)
@@ -1397,63 +1442,89 @@ def generate_ffmpeg_filter_complex_for_video_editing(non_attentive_seconds, dura
     
     return video_filter_string, audio_filter_string
 
-def create_edited_video_short_form(video_path, attention_results, duration, unique_id):
-   """
-   Create edited video for Short Form/Social showing consumer attention.
-   Blacks out screen and mutes audio during non-attentive seconds.
-   """
-   try:
-       # Create output path with unique identifier - USE TEMP DIR FOR PUBLIC DEPLOYMENT
-       output_dir = tempfile.gettempdir()
-       output_filename = f"edited_video_short_form_{unique_id}.mp4"
-       output_path = os.path.join(output_dir, output_filename)
-       # Get audio and visual results from attention_results
-       audio_results = attention_results.get('audio_results', {})
-       visual_results = attention_results.get('visual_results', {})
-       attentive_seconds = attention_results.get('attentive_seconds', 0)
-       # Identify non-attentive seconds
-       non_attentive_seconds = []
-       for second in range(1, duration + 1):
-           if second > attentive_seconds:
-               non_attentive_seconds.append(second)
-       # If no non-attentive seconds, just copy the original video
-       if not non_attentive_seconds:
-           import shutil
-           shutil.copy2(video_path, output_path)
-           return output_path
-       # Generate filter strings
-       video_filter, audio_filter = generate_ffmpeg_filter_complex_for_video_editing(
-           non_attentive_seconds, duration, mute_audio=True
-       )
-       # Build ffmpeg command
-       cmd = ['ffmpeg', '-i', video_path, '-y']
-       # Add video filters
-       if video_filter:
-           cmd.extend(['-vf', video_filter])
-       # Add audio filters
-       if audio_filter:
-           cmd.extend(['-af', audio_filter])
-       # Output settings
-       cmd.extend([
-           '-c:v', 'libx264',
-           '-preset', 'medium',
-           '-crf', '23',
-           '-c:a', 'aac',
-           '-b:a', '128k',
-           output_path
-       ])
-       # Run ffmpeg
-       result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-       if os.path.exists(output_path):
-           return output_path
-       else:
-           return None
-   except subprocess.CalledProcessError as e:
-       st.error(f"Video editing failed: {e.stderr}")
-       return None
-   except Exception as e:
-       st.error(f"Video editing error: {e}")
-       return None
+def create_edited_videos_short_form_scenarios(video_path, scenarios, duration, unique_id):
+    """
+    Create 3 edited videos for Short Form showing different scenario cutoff points.
+    Shows video/audio up to cutoff second, then blacks out screen with text overlay and mutes audio.
+    
+    Args:
+        video_path: Path to original video
+        scenarios: Dict with 'scenario_1', 'scenario_2', 'scenario_3' (seconds to show)
+        duration: Video duration in seconds
+        unique_id: Unique identifier for this analysis (to prevent overwriting)
+        
+    Returns:
+        List of output paths for the 3 edited videos, or None if failed
+    """
+    try:
+        edited_videos = []
+        
+        for scenario_num in range(1, 4):
+            # Get cutoff second for this scenario (keep as float for precision)
+            cutoff_second = float(scenarios[f'scenario_{scenario_num}'])
+
+            
+            # Create output path with unique identifier
+            output_dir = "/mnt/user-data/outputs"
+            os.makedirs(output_dir, exist_ok=True)
+            output_filename = f"short_form_scenario_{scenario_num}_{unique_id}.mp4"
+            output_path = os.path.join(output_dir, output_filename)
+            
+            # For fractional cutoffs, we need to handle this differently
+            # We'll use ffmpeg's timeline editing to cut at exact timestamp
+            # If cutoff is 0.5 seconds, show 0:00.00 to 0:00.50, then black out rest
+            
+            # Build ffmpeg command for precise cutoff
+            cmd = ['ffmpeg', '-i', video_path, '-y']
+            
+            # Calculate the exact cutoff time
+            cutoff_time = cutoff_second
+            
+            # Create a complex filter that shows video up to cutoff, then blacks out
+            # Format: drawbox filter that activates after cutoff_time
+            video_filter = (
+                f"drawbox=enable='gte(t,{cutoff_time})':color=black:t=fill,"
+                f"drawtext=enable='gte(t,{cutoff_time})':"
+                f"text='Consumer not watching':"
+                f"fontsize=48:"
+                f"fontcolor=white:"
+                f"x=(w-text_w)/2:"
+                f"y=(h-text_h)/2"
+            )
+            
+            # Mute audio after cutoff
+            audio_filter = f"volume=enable='gte(t,{cutoff_time})':volume=0"
+            
+            cmd.extend(['-vf', video_filter])
+            cmd.extend(['-af', audio_filter])
+            
+            # Output settings
+            cmd.extend([
+                '-c:v', 'libx264',
+                '-preset', 'medium',
+                '-crf', '23',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                output_path
+            ])
+            
+            # Run ffmpeg
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            
+            if os.path.exists(output_path):
+                edited_videos.append(output_path)
+            else:
+                st.error(f"Failed to create scenario {scenario_num} video")
+                return None
+        
+        return edited_videos if len(edited_videos) == 3 else None
+        
+    except subprocess.CalledProcessError as e:
+        st.error(f"Video editing failed: {e.stderr}")
+        return None
+    except Exception as e:
+        st.error(f"Video editing error: {e}")
+        return None
 
 def create_edited_videos_long_form(video_path, simulations, duration, unique_id):
    """
@@ -2499,7 +2570,7 @@ def main():
                         st.pyplot(attn['stacked_simulation_fig'])
 
                     # Long-form edited videos
-                    if 'edited_videos' in attn and len(attn['edited_videos']) == 3:
+                    if attn['media_form'] == 'Long Form' and 'edited_videos' in attn and len(attn['edited_videos']) == 3:
                         st.markdown("#### Consumer Viewing Experience: Viewing Simulations")
                         st.caption(
                             "Each video corresponds to a viewing simulation showing what the average consumer sees during attentive seconds."
@@ -2523,15 +2594,31 @@ def main():
                     if results.get('attention_viz'):
                         st.pyplot(results['attention_viz'])
 
-                    # Short-form edited video
-                    if (
-                        attn['media_form'] == 'Short Form or Social'
-                        and 'edited_video' in attn
-                    ):
-                        st.subheader("Edited Video: Average Consumer Experience")
-                        col1, col2 = st.columns([1, 5])
+                    # Display edited videos for Short Form scenarios
+                    if attn['media_form'] == 'Short Form or Social' and 'edited_videos' in attn and len(attn['edited_videos']) == 3:
+                        st.markdown("#### Consumer Viewing Experience: Viewing Scenarios")
+                        st.caption(f"Each video corresponds to a viewing scenario to show you what consumers see based on how long they watch on {media_vehicle}.")
+                        
+                        # Display scenario information
+                        if 'scenarios' in attn:
+                            scenarios = attn['scenarios']
+                        
+                        col1, col2, col3 = st.columns(3)
+                        
                         with col1:
-                            st.video(attn['edited_video'])
+                            st.markdown("**Scenario 1: Below-Average Attention**")
+                            st.caption(f"Consumer watches to {scenarios['scenario_1']} seconds")
+                            st.video(attn['edited_videos'][0])
+                        
+                        with col2:
+                            st.markdown("**Scenario 2: Average Attention**")
+                            st.caption(f"Consumer watches to {scenarios['scenario_2']} seconds")
+                            st.video(attn['edited_videos'][1])
+                        
+                        with col3:
+                            st.markdown("**Scenario 3: Above-Average Attention**")
+                            st.caption(f"Consumer watches to {scenarios['scenario_3']} seconds")
+                            st.video(attn['edited_videos'][2])                    
 
                 st.divider()
 
