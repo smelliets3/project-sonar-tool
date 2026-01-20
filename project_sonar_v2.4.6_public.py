@@ -492,44 +492,42 @@ def create_timeline_visualization(final_categories, duration):
     plt.tight_layout()
     return fig
 
-def create_summary_visualization(final_categories, duration):
-    """Create summary bar chart showing percentage of time in each category"""
-    print("Creating summary visualization...")
-    
-    category_counts = {cat: 0 for cat in CATEGORY_COLORS}
-    for category in final_categories.values():
-        category_counts[category] += 1
-    
-    percentages = {cat: (count / duration) * 100 if duration > 0 else 0 
-                  for cat, count in category_counts.items()}
-    
-    fig_summary, ax_summary = plt.subplots(figsize=(12, 6))
-    fig_summary.patch.set_facecolor('#f0f0f0')
-    
-    labels = list(percentages.keys())
-    values = list(percentages.values())
-    bar_colors = [CATEGORY_COLORS[label] for label in labels]
-    
-    bars = ax_summary.bar(labels, values, color=bar_colors)
-    ax_summary.set_ylabel("Percentage of Total Seconds (%)")
-    ax_summary.set_title("Branding Analysis Distribution")
-    ax_summary.set_ylim(0, 100)
-    
-    for bar, value in zip(bars, values):
-        height = bar.get_height()
-        # If bar is at or near 100%, place text inside the bar
-        if height >= 95:
-            ax_summary.text(bar.get_x() + bar.get_width()/2., height - 5,
-                            f'{round(value)}%', ha='center', va='top', fontweight='bold', color='black')
-        else:
-            # Otherwise place text above the bar
-            ax_summary.text(bar.get_x() + bar.get_width()/2., height + 1,
-                            f'{round(value)}%', ha='center', va='bottom', fontweight='bold')
-    
-    plt.setp(ax_summary.get_xticklabels(), rotation=15, ha="right")
-    fig_summary.tight_layout()
-    
-    return fig_summary
+def display_branding_distribution(category_counts, duration):
+   """
+   Display the branding distribution using HTML colored boxes.
+   Args:
+       category_counts: Dictionary with counts for each category
+       duration: Total video duration in seconds
+   """
+   # Calculate percentages
+   percentages = {
+       cat: round((count / duration * 100) if duration > 0 else 0)
+       for cat, count in category_counts.items()
+   }
+   # Create 4 columns for the 4 categories
+   cols = st.columns(4)
+   # Order of categories to display
+   categories_order = [
+       "Visual and Audio Branding",
+       "Audio Branding Only",
+       "Visual Branding Only",
+       "No Branding Present"
+   ]
+   for idx, category in enumerate(categories_order):
+       with cols[idx]:
+           color = CATEGORY_COLORS[category]
+           percentage = percentages[category]
+           # Create a colored box using HTML
+           box_html = f"""
+<div style="padding: 8px; background-color: {color};
+                       border: 2px solid #000; border-radius: 5px; text-align: center;
+                       min-height: 80px; display: flex; flex-direction: column;
+                       justify-content: center;">
+<div style="font-size: 11px; color: #000; margin-top: 4px; line-height: 1.2;">{category}</div>
+<div style="font-weight: bold; font-size: 24px; color: #000;">{percentage}%</div>
+</div>
+           """
+           st.markdown(box_html, unsafe_allow_html=True)
 
 # Incorporate Attention Data
 def classify_branding_with_attention(visual_detected, audio_detected, is_attentive):
@@ -694,8 +692,8 @@ def analyze_short_form_with_watch_time(final_categories, audio_results, visual_r
                 branding_counts["No Branding Present"] += 1
     
     # Calculate attentive branding score using watch time as denominator
-    attentive_branding_score = (branded_seconds_in_watch_time / watch_time_seconds * 100 
-                                if watch_time_seconds > 0 else 0)
+    attentive_branding_score = (branded_seconds_in_watch_time / attentive_seconds * 100 
+                                if attentive_seconds > 0 else 0)
     
     # Calculate distribution percentages based on watch time
     attentive_branding_distribution = {
@@ -1150,45 +1148,6 @@ def perform_attention_analysis(final_categories, audio_results, visual_results,
         status_text.empty()
     
     return results
-
-def create_attention_visualization(attention_results):
-    """
-    Create visualization for attention-based branding analysis.
-    
-    Shows the distribution of branding types during attentive moments.
-    """
-    fig, ax = plt.subplots(figsize=(12, 6))
-    fig.patch.set_facecolor('#f0f0f0')
-    
-    distribution = attention_results['attentive_branding_distribution']
-    
-    labels = list(distribution.keys())
-    values = list(distribution.values())
-    bar_colors = [CATEGORY_COLORS[label] for label in labels]
-    
-    bars = ax.bar(labels, values, color=bar_colors)
-    ax.set_ylabel("Percentage of Attentive Time (%)")
-    ax.set_title(f"Branding Distribution During Attentive Moments")
-    #ax.set_title(f"Branding Distribution During Attentive Moments ({attention_results['media_form']})")
-    ax.set_ylim(0, 100)
-    
-    # Add value labels on bars
-    for bar, value in zip(bars, values):
-        height = bar.get_height()
-    
-        # If bar is at or near 100%, place text inside the bar
-        if height >= 95:
-            ax.text(bar.get_x() + bar.get_width()/2., height - 5,
-                    f'{value:.0f}%', ha='center', va='top', fontweight='bold', color='black')
-        else:
-            # Otherwise place text above the bar
-            ax.text(bar.get_x() + bar.get_width()/2., height + 1,
-                    f'{value:.0f}%', ha='center', va='bottom', fontweight='bold')
-    
-    plt.setp(ax.get_xticklabels(), rotation=15, ha="right")
-    fig.tight_layout()
-    
-    return fig
 
 def get_attentive_branding_rating(score, media_form):
     """
@@ -2261,16 +2220,12 @@ def process_video_analysis(video_file, brand_name, brand_display_name, media_veh
         branding_percentage = (total_branding_seconds / duration) * 100 if duration > 0 else 0
         
         attention_results = None
-        attention_viz = None
 
         if attention_df is not None:
             attention_results = perform_attention_analysis(
                 final_categories, audio_results, visual_results, 
                 duration, media_vehicle, attention_df, video_path
             )
-            
-            if attention_results and attention_results['media_form'] == 'Short Form or Social':
-                attention_viz = create_attention_visualization(attention_results)
         
         # Total Branding Coverage
         total_branding_coverage = f"""
@@ -2301,7 +2256,6 @@ Percentage of Branding Presence: {round(branding_percentage)}% of video duration
         
         # Create visualizations
         timeline_fig = create_timeline_visualization(final_categories, duration)
-        summary_fig = create_summary_visualization(final_categories, duration)
         
         # Log results to Google Sheets
         analysis_id, timestamp_str, log_error = log_analysis_results(
@@ -2438,12 +2392,10 @@ Percentage of Branding Presence: {round(branding_percentage)}% of video duration
             'total_branding_coverage': total_branding_coverage,
             'ai_recommendation': ai_recommendation,
             'timeline_fig': timeline_fig,
-            'summary_fig': summary_fig,
             'category_counts': category_counts,
             'duration': duration,
             'branding_percentage': branding_percentage,
             'attention_results': attention_results,
-            'attention_viz': attention_viz,
             'media_vehicle': media_vehicle
         }, None
         
@@ -2453,7 +2405,17 @@ Percentage of Branding Presence: {round(branding_percentage)}% of video duration
 # Streamlit UI
 def main():
     st.title("Creative Consumer Insights Capability")
-
+    
+	st.markdown(
+        """
+        <p style='color:red; font-weight:bold;'>
+            ⚠️ This capability is intended for analytic use cases only. 
+            It is not approved for editing, recreating, or producing content of any kind.
+        </p>
+        """,
+        unsafe_allow_html=True
+    )
+	
     # --- Initialize a reset counter ---
     if "input_key" not in st.session_state:
         st.session_state.input_key = 0
@@ -2513,7 +2475,8 @@ def main():
                     "Percentage of Branding Presence",
                     f"{results['branding_percentage']:.0f}%"
                 )
-                st.pyplot(results['summary_fig'])
+
+				display_branding_distribution(results['category_counts'], results['duration'])
 
                 st.divider()
 
@@ -2589,10 +2552,6 @@ def main():
                         with col3:
                             st.markdown("**Viewing Simulation #3**")
                             st.video(attn['edited_videos'][2])
-
-                    # If attention visualization exists
-                    if results.get('attention_viz'):
-                        st.pyplot(results['attention_viz'])
 
                     # Display edited videos for Short Form scenarios
                     if attn['media_form'] == 'Short Form or Social' and 'edited_videos' in attn and len(attn['edited_videos']) == 3:
